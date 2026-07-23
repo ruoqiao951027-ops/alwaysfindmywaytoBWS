@@ -11,31 +11,34 @@
       padding: 0;
     }
 
-    body {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background-image: url('bgmain.png'); 
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-no-repeat;
-      font-family: Arial, sans-serif;
-      color: #fff;
-    }
+   body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-    /* 遮罩，讓背景圖稍微變暗，突顯文字與按鈕 */
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1;
-    }
+  /* 設定背景圖片 */
+  background-image: url('bgmain.png'); 
+  background-size: cover;          /* 讓圖片鋪滿螢幕 */
+  background-position: center;      /* 置中顯示 */
+  background-repeat: no-repeat;    /* 不重複 */
+  
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+/* 半透明半黑的遮罩，數值改小一點（如 0.3）背景會更明顯 */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* 0.3 代表 30% 透明度的黑 */
+  z-index: 1;
+}
 
     .main-menu {
       position: relative;
