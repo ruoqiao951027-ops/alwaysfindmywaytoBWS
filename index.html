@@ -49,68 +49,67 @@
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
 
-    /* 進度條軌道：調粗至 20px，置於中央偏下 (top: 65%) */
-    .progress-track {
-      position: absolute;
-      top: 65%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80%;
-      max-width: 360px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 10px;
-      overflow: visible; /* 確保手指突出不受限 */
-      backdrop-filter: blur(2px);
-    }
+    /* 進度條軌道：再調粗至 32px */
+.progress-track {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 380px;
+  height: 32px; /* 再次加粗 */
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  overflow: visible; /* 確保超大手指不被裁切 */
+  backdrop-filter: blur(2px);
+}
 
-    /* 進度條本體 */
-    .progress-bar {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #ff758c, #ff2a74);
-      border-radius: 10px;
-      transition: width 0.1s linear;
-    }
+/* 進度條本體 */
+.progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff758c, #ff2a74);
+  border-radius: 16px;
+  transition: width 0.1s linear;
+}
 
-    /* 手指圖示：定位在進度條最右端邊界 */
-    .finger-icon {
-      position: absolute;
-      right: -32px; /* 根據手指寬度一半調整，剛好掛在進度條前端 */
-      top: 50%;
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-      pointer-events: none;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
-      
-      /* 擺動動畫設定 */
-      -webkit-animation: fingerWiggle 0.7s infinite alternate ease-in-out;
-      animation: fingerWiggle 0.7s infinite alternate ease-in-out;
-    }
+/* 手指圖示：再放大至 110px，並設定 0.7s 瞬間切換角度 */
+.finger-icon {
+  position: absolute;
+  right: -55px; /* 根據 110px 寬度微調中心點置於邊界 */
+  top: 50%;
+  width: 110px; /* 手指大幅放大 */
+  height: 110px;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+  
+  /* 0.7秒循環，使用 steps(1) 達成兩角度瞬間跳動 */
+  -webkit-animation: fingerJump 0.7s infinite steps(1);
+  animation: fingerJump 0.7s infinite steps(1);
+}
 
-    /* 手指角度與左右搖晃動畫 Keyframes */
-    @-webkit-keyframes fingerWiggle {
-      0% {
-        transform: translateY(-50%) rotate(-15deg) scale(1);
-      }
-      100% {
-        transform: translateY(-50%) rotate(25deg) scale(1.1);
-      }
-    }
+/* 手指兩角度瞬間跳動動畫 (-30deg ↔ +30deg) */
+@-webkit-keyframes fingerJump {
+  0% {
+    transform: translateY(-50%) rotate(-30deg);
+  }
+  50% {
+    transform: translateY(-50%) rotate(30deg);
+  }
+}
 
-    @keyframes fingerWiggle {
-      0% {
-        transform: translateY(-50%) rotate(-15deg) scale(1);
-      }
-      100% {
-        transform: translateY(-50%) rotate(25deg) scale(1.1);
-      }
-    }
-
+@keyframes fingerJump {
+  0% {
+    transform: translateY(-50%) rotate(-30deg);
+  }
+  50% {
+    transform: translateY(-50%) rotate(30deg);
+  }
+}
     /* 2. 介紹文字畫面 */
     #intro-screen {
       position: fixed;
