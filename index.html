@@ -31,84 +31,85 @@
       position: relative;
     }
 
-    /* 1. Splash Screen 待機畫面 (移除黑色遮罩，改為透明) */
+    /* 1. Splash Screen 待機畫面 */
     #splash-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: transparent; /* 完全透出背景圖片 */
+      background: transparent;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end; /* 將進度條放至畫面下方 */
+      justify-content: flex-end;
       align-items: center;
-      padding-bottom: 80px;      /* 距離底部高度 */
+      padding-bottom: 80px;
       z-index: 10;
       cursor: pointer;
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
 
-    /* 載入進度條容器外框 */
-    .progress-container {
-      width: 70%;
-      max-width: 320px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    /* 進度條軌道：調粗至 20px，置於中央偏下 (top: 65%) */
+    .progress-track {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 360px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: visible; /* 確保手指突出不受限 */
+      backdrop-filter: blur(2px);
     }
 
-   /* 進度條軌道：調粗至 20px，並置於中央偏下 (top: 65%) */
-.progress-track {
-  position: absolute;
-  top: 65%; /* 中央偏下位置 */
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 360px;
-  height: 20px; /* 進度條大幅加粗 */
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  overflow: visible; /* 讓放大後的手指可以凸出 */
-  backdrop-filter: blur(2px);
-}
+    /* 進度條本體 */
+    .progress-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff758c, #ff2a74);
+      border-radius: 10px;
+      transition: width 0.1s linear;
+    }
 
-/* 進度條本體 */
-.progress-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #ff758c, #ff2a74);
-  border-radius: 10px;
-  transition: width 0.1s linear;
-}
+    /* 手指圖示：定位在進度條最右端邊界 */
+    .finger-icon {
+      position: absolute;
+      right: -32px; /* 根據手指寬度一半調整，剛好掛在進度條前端 */
+      top: 50%;
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+      
+      /* 擺動動畫設定 */
+      -webkit-animation: fingerWiggle 0.7s infinite alternate ease-in-out;
+      animation: fingerWiggle 0.7s infinite alternate ease-in-out;
+    }
 
-/* 手指圖示：大幅放大至 64px，並加入擺動動畫 */
-.finger-icon {
-  position: absolute;
-  right: -25px; /* 根據放大後尺寸微調前端對齊 */
-  top: 50%;
-  width: 64px;  /* 手指大幅放大 */
-  height: 64px;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
-  
-  /* 綁定每 0.7 秒左右無限循環的擺動動畫 */
-  animation: fingerWiggle 0.7s infinite alternate ease-in-out;
-}
+    /* 手指角度與左右搖晃動畫 Keyframes */
+    @-webkit-keyframes fingerWiggle {
+      0% {
+        transform: translateY(-50%) rotate(-15deg) scale(1);
+      }
+      100% {
+        transform: translateY(-50%) rotate(25deg) scale(1.1);
+      }
+    }
 
-/* 2. 新增手指左右/角度擺動的動畫 Keyframes */
-@keyframes fingerWiggle {
-  0% {
-    transform: translateY(-50%) rotate(-15deg);
-  }
-  100% {
-    transform: translateY(-50%) rotate(20deg);
-  }
-}
+    @keyframes fingerWiggle {
+      0% {
+        transform: translateY(-50%) rotate(-15deg) scale(1);
+      }
+      100% {
+        transform: translateY(-50%) rotate(25deg) scale(1.1);
+      }
+    }
 
     /* 2. 介紹文字畫面 */
     #intro-screen {
@@ -117,7 +118,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(10, 10, 20, 0.6); /* 稍微看得到背景 */
+      background: rgba(10, 10, 20, 0.6);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -137,19 +138,16 @@
       margin-bottom: 20px;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
       
-      /* 初始狀態：隱藏並位在下方 */
       opacity: 0;
       transform: translateY(40px);
       transition: opacity 0.8s ease, transform 0.8s ease;
     }
 
-    /* 文字滑入顯示的效果 */
     .intro-text.slide-up {
       opacity: 1;
       transform: translateY(0);
     }
 
-    /* 點擊繼續提示 */
     .click-hint {
       margin-top: 30px;
       font-size: 0.95rem;
@@ -175,14 +173,12 @@
       max-width: 400px;
       width: 90%;
 
-      /* 初始狀態：隱藏並縮小 */
       opacity: 0;
       transform: scale(0.8);
       transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      pointer-events: none; /* 尚未出現時不擋住點擊 */
+      pointer-events: none;
     }
 
-    /* 按鈕浮出後的狀態 */
     .main-menu.pop-up {
       opacity: 1;
       transform: scale(1);
@@ -233,7 +229,6 @@
       transform: none;
     }
 
-    /* 通用隱藏樣式 */
     .fade-out {
       opacity: 0 !important;
       visibility: hidden !important;
@@ -247,17 +242,16 @@
 <body>
 
   <!-- 1. Splash Screen 待機畫面 (進度條與手指) -->
-<div id="splash-screen">
-  <div class="progress-track">
-    <div id="progress-bar" class="progress-bar">
-      <img src="finger.png" alt="finger" class="finger-icon">
+  <div id="splash-screen">
+    <div class="progress-track">
+      <div id="progress-bar" class="progress-bar">
+        <img src="finger.png" alt="finger" class="finger-icon">
+      </div>
     </div>
   </div>
-</div>
 
   <!-- 2. 兩段介紹文字畫面 -->
   <div id="intro-screen" class="hidden">
-    <!-- 第一段介紹文字 -->
     <div id="intro-1" class="intro-text">
       因為佑錫<br>
       這個夏天筒筒們都很狂熱<br>
@@ -266,7 +260,6 @@
       相信筒筒們會有聊不完的話題<br>
     </div>
     
-    <!-- 第二段介紹文字 -->
     <div id="intro-2" class="intro-text">
       今年再次舉辦了邊邊生咖<br>
       歡迎筒筒們前來<br>
@@ -304,17 +297,29 @@
 
     mainBgm.volume = 0.5;
 
+    // 解決瀏覽器禁止自動播放：只要使用者有任何第一次點擊/觸碰，就嘗試播放音樂
+    function initAudio() {
+      mainBgm.play().then(() => {
+        // 成功播放後即可移除監聽
+        document.removeEventListener('click', initAudio);
+        document.removeEventListener('touchstart', initAudio);
+      }).catch(err => {
+        console.log("等待使用者點擊以播放音樂...");
+      });
+    }
+    document.addEventListener('click', initAudio);
+    document.addEventListener('touchstart', initAudio);
+
     // 模擬資源載入進度條跑動
     let progress = 0;
     const loadingInterval = setInterval(() => {
-      // 隨機增加進度，呈現自然載入感
       progress += Math.floor(Math.random() * 12) + 5;
       
       if (progress >= 100) {
         progress = 100;
         clearInterval(loadingInterval);
         
-        // 載入完畢，開啟點擊進入的監聽
+        // 載入完畢，開啟 Splash Screen 的點擊監聽
         splashScreen.addEventListener('click', handleSplashClick);
         splashScreen.addEventListener('touchstart', handleSplashClick);
       }
@@ -322,48 +327,38 @@
       progressBar.style.width = progress + '%';
     }, 120);
 
-    // 階段 1：進度條跑完後點擊 Splash Screen
+    // 階段 1：點擊 Splash Screen
     function handleSplashClick() {
-      // 1. 播放音樂
-      mainBgm.play().catch(err => console.log("音樂播放受阻：", err));
+      // 確保音樂再次觸發播放
+      mainBgm.play().catch(err => console.log(err));
 
-      // 2. 隱藏 Splash Screen
       splashScreen.classList.add('fade-out');
-
-      // 3. 顯示介紹文字區域
       introScreen.classList.remove('hidden');
 
-      // 4. 第一段文字滑入
       setTimeout(() => {
         intro1.classList.add('slide-up');
       }, 300);
 
-      // 5. 間隔 2 秒後，第二段文字滑入
       setTimeout(() => {
         intro2.classList.add('slide-up');
         clickHint.classList.add('show');
 
-        // 第二段文字出現後，開啟 introScreen 點擊監聽
         introScreen.addEventListener('click', handleIntroClick);
         introScreen.addEventListener('touchstart', handleIntroClick);
       }, 2300);
 
-      // 移除 Splash Screen 事件
       splashScreen.removeEventListener('click', handleSplashClick);
       splashScreen.removeEventListener('touchstart', handleSplashClick);
     }
 
     // 階段 2：點擊介紹文字畫面
     function handleIntroClick() {
-      // 1. 介紹文字畫面淡出
       introScreen.classList.add('fade-out');
 
-      // 2. 主選單按鈕彈出
       setTimeout(() => {
         mainMenu.classList.add('pop-up');
       }, 300);
 
-      // 移除事件監聽
       introScreen.removeEventListener('click', handleIntroClick);
       introScreen.removeEventListener('touchstart', handleIntroClick);
     }
