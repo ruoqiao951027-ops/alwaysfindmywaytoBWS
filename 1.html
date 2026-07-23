@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>偶像歷程回顧之旅</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #111;
+      font-family: Arial, sans-serif;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: #1a1a2e;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* UI 畫面遮罩 (開始/事件彈窗/結束) */
+    .screen-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      z-index: 10;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #ff2a74;
+      margin-bottom: 15px;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      max-width: 500px;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #ff2a74, #ff758c);
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 42, 116, 0.4);
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 手機虛擬控制按鈕 */
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 30px;
+      pointer-events: none; /* 讓空白區域不擋住點擊 */
+      z-index: 5;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      pointer-events: auto;
+    }
+
+    .touch-btn {
+      width: 65px;
+      height: 65px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: bold;
+      backdrop-filter: blur(5px);
+      pointer-events: auto;
+    }
+
+    .touch-btn:active {
+      background: rgba(255, 42, 116, 0.6);
+    }
+
+    /* 事件彈窗專用 */
+    #event-modal {
+      background: rgba(20, 20, 35, 0.95);
+      border: 2px solid #ff2a74;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 450px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    #event-title {
+      color: #ffd700;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 手機虛擬按鈕 -->
+    <div class="controls">
+      <div class="btn-group">
+        <div class="touch-btn" id="btn-left">◀</div>
+        <div class="touch-btn" id="btn-right">▶</div>
+      </div>
+      <div class="btn-group">
+        <div class="touch-btn" id="btn-jump">▲</div>
+      </div>
+    </div>
+
+    <!-- 開始畫面 -->
+    <div id="start-screen" class="screen-overlay">
+      <h1>偶像星光歷程展</h1>
+      <p>
+        歡迎來到偶像的回顧之旅！<br>
+        • 使用畫面左下角的 <b>◀ ▶</b> 移動<br>
+        • 使用右下角的 <b>▲</b> 跳躍收集紅色星光點點<br>
+        • 沿途觸發<b>星形徽章</b>重溫歷程大事件！
+      </p>
+      <button class="btn" id="start-btn">開始旅程</button>
+    </div>
+
+    <!-- 事件回顧彈窗 -->
+    <div id="event-screen" class="screen-overlay hidden">
+      <div id="event-modal">
+        <h2 id="event-title">大事件標題</h2>
+        <p id="event-desc">大事件詳細內容...</p>
+        <button class="btn" id="close-event-btn">繼續前進</button>
+      </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="end-screen" class="screen-overlay hidden">
+      <h1>抵達終點！</h1>
+      <p id="final-score">恭喜你完成了偶像歷程巡演！</p>
+      <button class="btn" id="restart-btn">再次回顧</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI 元素
+    const startScreen = document.getElementById('start-screen');
+    const eventScreen = document.getElementById('event-screen');
+    const endScreen = document.getElementById('end-screen');
+    const eventTitle = document.getElementById('event-title');
+    const eventDesc = document.getElementById('event-desc');
+    const finalScore = document.getElementById('final-score');
+
+    // 調整 Canvas 尺寸為全螢幕
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 遊戲數據與狀態
+    let gameState = 'START'; // START, PLAYING, PAUSED, END
+    let score = 0;
+    let cameraX = 0;
+    const worldWidth = 3500; // 地圖總長度
+
+    // 玩家設定
+    const player = {
+      x: 100,
+      y: 0,
+      width: 30,
+      height: 50,
+      vx: 0,
+      vy: 0,
+      speed: 4,
+      jumpPower: -12,
+      gravity: 0.6,
+      isGrounded: false
+    };
+
+    // 按鈕控制狀態
+    const keys = { left: false, right: false, jump: false };
+
+    // 偶像歷程事件設定 (不同位置的事件)
+    const events = [
+      { x: 600, title: "2018：地下地下練習生", desc: "在小小的地下舞台進行了首次演出，雖然觀眾只有十幾個人，但夢想從這裡發芽！", triggered: false },
+      { x: 1300, title: "2020：選秀節目出道", desc: "憑藉堅強的舞蹈與歌唱實力，以第一名的成績高票出道！正式開啟璀璨生涯！", triggered: false },
+      { x: 2000, title: "2022：首張個人專輯發售", desc: "主打歌狂刷音樂榜單第一名，橫掃各大新人與最佳歌手大獎！", triggered: false },
+      { x: 2700, title: "2024：巨蛋萬人演唱會", desc: "站上了夢寐以求的萬人巨蛋舞台，全場為她揮舞著螢光棒，紅色的海浪無邊無際。", triggered: false }
+    ];
+
+    // 紅色點點 (收集物)
+    let collectibles = [];
+    function initCollectibles() {
+      collectibles = [];
+      for (let x = 300; x < worldWidth - 300; x += 100) {
+        // 避開事件點附近
+        if (!events.some(e => Math.abs(e.x - x) < 50)) {
+          collectibles.push({
+            x: x,
+            y: canvas.height - 150 - (Math.random() > 0.5 ? 60 : 0),
+            radius: 8,
+            collected: false
+          });
+        }
+      }
+    }
+
+    // 虛擬控制按鈕監聽
+    function setupTouchControls() {
+      const bindTouch = (id, key) => {
+        const btn = document.getElementById(id);
+        const start = (e) => { e.preventDefault(); keys[key] = true; };
+        const end = (e) => { e.preventDefault(); keys[key] = false; };
+        btn.addEventListener('touchstart', start);
+        btn.addEventListener('touchend', end);
+        btn.addEventListener('mousedown', start);
+        btn.addEventListener('mouseup', end);
+      };
+
+      bindTouch('btn-left', 'left');
+      bindTouch('btn-right', 'right');
+
+      // 跳躍按鈕單擊處理
+      const jumpBtn = document.getElementById('btn-jump');
+      const doJump = (e) => {
+        e.preventDefault();
+        if (player.isGrounded && gameState === 'PLAYING') {
+          player.vy = player.jumpPower;
+          player.isGrounded = false;
+        }
+      };
+      jumpBtn.addEventListener('touchstart', doJump);
+      jumpBtn.addEventListener('mousedown', doJump);
+    }
+
+    // 鍵盤控制支援 (電腦測試用)
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+      if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && player.isGrounded && gameState === 'PLAYING') {
+        player.vy = player.jumpPower;
+        player.isGrounded = false;
+      }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+    });
+
+    // 重置遊戲
+    function resetGame() {
+      score = 0;
+      cameraX = 0;
+      player.x = 100;
+      player.y = canvas.height - 150;
+      player.vx = 0;
+      player.vy = 0;
+      events.forEach(e => e.triggered = false);
+      initCollectibles();
+    }
+
+    // 更新遊戲狀態
+    function update() {
+      if (gameState !== 'PLAYING') return;
+
+      const groundY = canvas.height - 100; // 地面高度
+
+      // 左右移動
+      if (keys.left) player.vx = -player.speed;
+      else if (keys.right) player.vx = player.speed;
+      else player.vx = 0;
+
+      player.x += player.vx;
+
+      // 邊界限制
+      if (player.x < 0) player.x = 0;
+
+      // 重力與垂直移動
+      player.vy += player.gravity;
+      player.y += player.vy;
+
+      // 著地判定
+      if (player.y + player.height >= groundY) {
+        player.y = groundY - player.height;
+        player.vy = 0;
+        player.isGrounded = true;
+      }
+
+      // 攝影機跟隨 (橫向捲動)
+      cameraX = player.x - canvas.width / 3;
+      if (cameraX < 0) cameraX = 0;
+      if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
+
+      // 1. 檢測收集紅色點點
+      collectibles.forEach(c => {
+        if (!c.collected) {
+          let dist = Math.hypot((player.x + player.width/2) - c.x, (player.y + player.height/2) - c.y);
+          if (dist < c.radius + player.width/2) {
+            c.collected = true;
+            score += 10;
+          }
+        }
+      });
+
+      // 2. 檢測觸發歷史事件
+      events.forEach(e => {
+        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 30) {
+          e.triggered = true;
+          gameState = 'PAUSED';
+          eventTitle.innerText = e.title;
+          eventDesc.innerText = e.desc;
+          eventScreen.classList.remove('hidden');
+        }
+      });
+
+      // 3. 抵達終點判定
+      if (player.x >= worldWidth - 100) {
+        gameState = 'END';
+        finalScore.innerHTML = `你成功陪偶像走完了這段精彩旅程！<br>獲得星光熱情值：<b>${score}</b> 分`;
+        endScreen.classList.remove('hidden');
+      }
+    }
+
+    // 繪製遊戲畫面
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      // 根據攝影機位置平移世界
+      ctx.translate(-cameraX, 0);
+
+      const groundY = canvas.height - 100;
+
+      // 繪製跑道/地面
+      ctx.fillStyle = '#2c2c54';
+      ctx.fillRect(0, groundY, worldWidth, 100);
+      ctx.strokeStyle = '#ff2a74';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      ctx.lineTo(worldWidth, groundY);
+      ctx.stroke();
+
+      // 繪製紅色點點 (收集物)
+      collectibles.forEach(c => {
+        if (!c.collected) {
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff4757';
+          ctx.shadowColor = '#ff4757';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
+
+      // 繪製歷程事件點 (星星圖案)
+      events.forEach(e => {
+        ctx.fillStyle = e.triggered ? '#70a1ff' : '#ffa502';
+        ctx.beginPath();
+        ctx.arc(e.x, groundY - 40, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 事件標籤文字
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(e.triggered ? '✓ 已回顧' : '★ 大事件', e.x, groundY - 70);
+      });
+
+      // 繪製終點拱門
+      ctx.fillStyle = '#2ed573';
+      ctx.fillRect(worldWidth - 100, groundY - 120, 15, 120);
+      ctx.fillStyle = '#2ed573';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText('FINISH 終點', worldWidth - 90, groundY - 130);
+
+      // 繪製主角 (偶像玩家)
+      ctx.fillStyle = '#ff758c';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      // 主角眼睛裝飾
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(player.x + (player.vx < 0 ? 5 : 18), player.y + 10, 8, 8);
+
+      ctx.restore();
+
+      // 繪製固定在螢幕上的 UI (分數)
+      if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`收集點點分數: ${score}`, 20, 35);
+      }
+    }
+
+    // 主遊戲循環
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // UI 按鈕事件綁定
+    document.getElementById('start-btn').addEventListener('click', () => {
+      startScreen.classList.add('hidden');
+      resetGame();
+      gameState = 'PLAYING';
+    });
+
+    document.getElementById('close-event-btn').addEventListener('click', () => {
+      eventScreen.classList.add('hidden');
+      gameState = 'PLAYING';
+    });
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      endScreen.classList.add('hidden');
+      resetGame();
+      gameState = 'PLAYING';
+    });
+
+    // 初始化控制與遊戲
+    setupTouchControls();
+    gameLoop();
+  </script>
+</body>
+</html>
