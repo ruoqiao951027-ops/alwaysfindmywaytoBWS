@@ -11,25 +11,81 @@
       padding: 0;
     }
 
-   body {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
 
-  /* 設定背景圖片 */
-  background-image: url('bgmain.png'); 
-  background-size: cover;          /* 讓圖片鋪滿螢幕 */
-  background-position: center;      /* 置中顯示 */
-  background-repeat: no-repeat;    /* 不重複 */
-  
-  font-family: Arial, sans-serif;
-  color: #fff;
-}
+      /* 設定背景圖片 */
+      background-image: url('bgmain.png'); 
+      background-size: cover;          /* 讓圖片鋪滿螢幕 */
+      background-position: center;     /* 置中顯示 */
+      background-repeat: no-repeat;   /* 不重複 */
+      
+      font-family: Arial, sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
 
+    /* 全螢幕待機畫面 (Splash Screen) */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 20, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      cursor: pointer;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
 
+    /* 待機畫面點擊提示文字動畫 */
+    .splash-title {
+      font-size: 2.2rem;
+      color: #ff2a74;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px rgba(255, 42, 116, 0.8);
+      font-weight: bold;
+    }
+
+    .splash-prompt {
+      font-size: 1.2rem;
+      color: #ffffff;
+      padding: 12px 24px;
+      border: 2px solid #ff758c;
+      border-radius: 30px;
+      background: rgba(255, 42, 116, 0.2);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 42, 116, 0.7);
+      }
+      70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(255, 42, 116, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 42, 116, 0);
+      }
+    }
+
+    /* 隱藏待機畫面的樣式 */
+    .fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
 
     .main-menu {
       position: relative;
@@ -69,6 +125,7 @@
       text-decoration: none; /* 移除超連結下劃線 */
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(255, 42, 116, 0.4);
+      display: inline-block;
     }
 
     .menu-btn:hover {
@@ -91,8 +148,16 @@
 </head>
 <body>
 
-  <div class="overlay"></div>
+  <!-- 待機 / 啟動畫面遮罩 (點擊後進入並播放 BGM) -->
+  <div id="splash-screen">
+    <div class="splash-title">筒筒's Library</div>
+    <div class="splash-prompt">✨ 點擊任意處進入畫面 ✨</div>
+  </div>
 
+  <!-- 主畫面音樂，請確保音樂檔名與這裡一致 -->
+  <audio id="main-bgm" src="bgm_main.mp3" loop></audio>
+
+  <!-- 主選單 -->
   <div class="main-menu">
     <h1>筒筒's Library</h1>
     <div class="btn-container">
@@ -106,6 +171,33 @@
       <button class="menu-btn disabled" disabled> 生咖會場瞧一眼 </button>
     </div>
   </div>
+
+  <script>
+    const splashScreen = document.getElementById('splash-screen');
+    const mainBgm = document.getElementById('main-bgm');
+
+    // 設定音量 (視需要微調 0.0 ~ 1.0)
+    mainBgm.volume = 0.5;
+
+    // 點擊待機畫面時的處理函式
+    function startExperience() {
+      // 1. 播放背景音樂
+      mainBgm.play().catch(err => {
+        console.log("音樂播放受阻：", err);
+      });
+
+      // 2. 淡出並隱藏待機畫面
+      splashScreen.classList.add('fade-out');
+
+      // 3. 移除事件監聽，避免重複觸發
+      splashScreen.removeEventListener('click', startExperience);
+      splashScreen.removeEventListener('touchstart', startExperience);
+    }
+
+    // 綁定點擊與觸控事件
+    splashScreen.addEventListener('click', startExperience);
+    splashScreen.addEventListener('touchstart', startExperience);
+  </script>
 
 </body>
 </html>
