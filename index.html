@@ -76,38 +76,38 @@
   transition: width 0.1s linear;
 }
 
-/* 手指圖示：再放大至 110px，並設定 0.7s 瞬間切換角度 */
+/* 手指圖示：再放大至 220px，並設定 1.5s 瞬間切換角度 */
 .finger-icon {
   position: absolute;
   right: -55px; /* 根據 110px 寬度微調中心點置於邊界 */
   top: 50%;
-  width: 110px; /* 手指大幅放大 */
-  height: 110px;
+  width: 220px; /* 手指大幅放大 */
+  height: 220px;
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
   
-  /* 0.7秒循環，使用 steps(1) 達成兩角度瞬間跳動 */
-  -webkit-animation: fingerJump 0.7s infinite steps(1);
-  animation: fingerJump 0.7s infinite steps(1);
+  /* 1.5秒循環，使用 steps(1) 達成兩角度瞬間跳動 */
+  -webkit-animation: fingerJump 1.5s infinite steps(1);
+  animation: fingerJump 1.5s infinite steps(1);
 }
 
-/* 手指兩角度瞬間跳動動畫 (-30deg ↔ +30deg) */
+/* 手指兩角度瞬間跳動動畫 (-15deg ↔ +15deg) */
 @-webkit-keyframes fingerJump {
   0% {
-    transform: translateY(-50%) rotate(-30deg);
+    transform: translateY(-50%) rotate(-15deg);
   }
   50% {
-    transform: translateY(-50%) rotate(30deg);
+    transform: translateY(-50%) rotate(15deg);
   }
 }
 
 @keyframes fingerJump {
   0% {
-    transform: translateY(-50%) rotate(-30deg);
+    transform: translateY(-50%) rotate(-15deg);
   }
   50% {
-    transform: translateY(-50%) rotate(30deg);
+    transform: translateY(-50%) rotate(15deg);
   }
 }
     /* 2. 介紹文字畫面 */
