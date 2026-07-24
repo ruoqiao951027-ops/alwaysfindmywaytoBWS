@@ -14,19 +14,27 @@
       touch-action: manipulation;
     }
 
-    body, html {
+    html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #111;
+      background-color: #0d0d1a;
       font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    #game-container {
+    /* 遊戲容器：固定 16:9 比例，自動適應手機螢幕不變形 */
+    #game-wrapper {
       position: relative;
       width: 100vw;
-      height: 100vh;
+      height: 56.25vw; /* 16:9 */
+      max-height: 100vh;
+      max-width: 177.78vh; /* 16:9 */
       background: #1a1a2e;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
 
     canvas {
@@ -37,14 +45,14 @@
 
     /* 直向螢幕提示 */
     @media (orientation: portrait) {
-      #game-container::after {
+      #game-wrapper::after {
         content: "📱 請將手機旋轉至橫向以獲得最佳體驗";
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.95);
         color: #fff;
         display: flex;
         justify-content: center;
@@ -56,7 +64,7 @@
       }
     }
 
-    /* UI 畫面遮罩 */
+    /* UI 遮罩 */
     .screen-overlay {
       position: absolute;
       top: 0;
@@ -88,12 +96,12 @@
       font-size: 0.95rem;
       line-height: 1.5;
       margin-bottom: 15px;
-      max-width: 500px;
+      max-width: 480px;
     }
 
     .btn {
       padding: 10px 25px;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: bold;
       color: #fff;
       background: linear-gradient(45deg, #ff2a74, #ff758c);
@@ -107,10 +115,11 @@
       transform: scale(0.95);
     }
 
-    /* 控制按鈕容器 */
+    /* 手機控制按鈕 */
     .controls {
       position: absolute;
       bottom: 15px;
+      left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
@@ -126,8 +135,8 @@
     }
 
     .arrow-btn {
-      width: 55px;
-      height: 55px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
       cursor: pointer;
       filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
@@ -146,8 +155,8 @@
     }
 
     .touch-btn {
-      width: 55px;
-      height: 55px;
+      width: 50px;
+      height: 50px;
       background: rgba(255, 255, 255, 0.25);
       border: 2px solid rgba(255, 255, 255, 0.6);
       border-radius: 50%;
@@ -155,7 +164,7 @@
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: bold;
       backdrop-filter: blur(5px);
       pointer-events: auto;
@@ -166,8 +175,7 @@
       border: 2px solid #ff2a74;
       border-radius: 15px;
       width: 80%;
-      max-width: 450px;
-      margin: auto;
+      max-width: 420px;
       padding: 20px;
     }
 
@@ -181,8 +189,9 @@
 
   <audio id="game-bgm" src="game.mp3" loop></audio>
 
-  <div id="game-container">
-    <canvas id="gameCanvas"></canvas>
+  <div id="game-wrapper">
+    <!-- 固定內部解析度為 800x450，防止任何壓扁變形 -->
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
 
     <div class="controls">
       <div class="btn-group">
@@ -227,10 +236,10 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // 動態取得地面高度：設在螢幕底部往上 22% 的位置
-    function getGroundY() {
-      return canvas.height * 0.78;
-    }
+    // 固定標準邏輯解析度 (防止手機畫面壓扁)
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 450;
+    const GROUND_Y = 360; // 地面高度固在 y = 360
 
     // 載入圖片
     const imgSmall = new Image();
@@ -255,23 +264,16 @@
     const eventDesc = document.getElementById('event-desc');
     const finalScore = document.getElementById('final-score');
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
     let gameState = 'START';
     let score = 0;
     let cameraX = 0;
-    const worldWidth = 3500;
+    const worldWidth = 3200;
 
     const player = {
       x: 100,
       y: 0,
-      width: 45,  
-      height: 55,
+      width: 48,  
+      height: 58,
       vx: 0,
       vy: 0,
       speed: 4.5,
@@ -285,22 +287,21 @@
     const keys = { left: false, right: false, jump: false };
 
     const events = [
-      { x: 600, title: "2018：地下地下練習生", desc: "在小小的地下舞台進行了首次演出，雖然觀眾只有十幾個人，但夢想從這裡發芽！", triggered: false },
-      { x: 1300, title: "2020：選秀節目出道", desc: "憑藉堅強的舞蹈與歌唱實力，以第一名的成績高票出道！正式開啟璀璨生涯！", triggered: false },
-      { x: 2000, title: "2022：首張個人專輯發售", desc: "主打歌狂刷音樂榜單第一名，橫掃各大新人與最佳歌手大獎！", triggered: false },
-      { x: 2700, title: "2024：巨蛋萬人演唱會", desc: "站上了夢寐以求的萬人巨蛋舞台，全場為她揮舞著螢光棒，紅色的海浪無邊無際。", triggered: false }
+      { x: 600, title: "2018：地下練習生", desc: "在小小的地下舞台進行了首次演出，雖然觀眾只有十幾個人，但夢想從這裡發芽！", triggered: false },
+      { x: 1200, title: "2020：選秀節目出道", desc: "憑藉堅強的舞蹈與歌唱實力，以第一名的成績高票出道！正式開啟璀璨生涯！", triggered: false },
+      { x: 1800, title: "2022：首張個人專輯發售", desc: "主打歌狂刷音樂榜單第一名，橫掃各大新人與最佳歌手大獎！", triggered: false },
+      { x: 2400, title: "2024：巨蛋萬人演唱會", desc: "站上了夢寐以求的萬人巨蛋舞台，全場為她揮舞著螢光棒，紅色的海浪無邊無際。", triggered: false }
     ];
 
     let collectibles = [];
     function initCollectibles() {
       collectibles = [];
-      const groundY = getGroundY();
       for (let x = 300; x < worldWidth - 300; x += 110) {
-        if (!events.some(e => Math.abs(e.x - x) < 60)) {
+        if (!events.some(e => Math.abs(e.x - x) < 70)) {
           collectibles.push({
             x: x,
-            y: groundY - 40 - (Math.random() > 0.5 ? 50 : 0),
-            targetWidth: 55, // 適合橫螢幕的適中尺寸
+            y: GROUND_Y - 35 - (Math.random() > 0.5 ? 45 : 0),
+            targetWidth: 50, // 加大 small 尺寸
             collected: false
           });
         }
@@ -349,9 +350,8 @@
     function resetGame() {
       score = 0;
       cameraX = 0;
-      const groundY = getGroundY();
       player.x = 100;
-      player.y = groundY - player.height;
+      player.y = GROUND_Y - player.height;
       player.vx = 0;
       player.vy = 0;
       player.facing = 'right';
@@ -362,8 +362,6 @@
 
     function update() {
       if (gameState !== 'PLAYING') return;
-
-      const groundY = getGroundY();
 
       if (keys.left) {
         player.vx = -player.speed;
@@ -385,15 +383,16 @@
       player.y += player.vy;
 
       // 著地判定
-      if (player.y + player.height >= groundY) {
-        player.y = groundY - player.height;
+      if (player.y + player.height >= GROUND_Y) {
+        player.y = GROUND_Y - player.height;
         player.vy = 0;
         player.isGrounded = true;
       }
 
-      cameraX = player.x - canvas.width / 3;
+      // 攝影機跟隨
+      cameraX = player.x - CANVAS_WIDTH / 3;
       if (cameraX < 0) cameraX = 0;
-      if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
+      if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
       // 碰撞檢測 (small.png)
       collectibles.forEach(c => {
@@ -406,9 +405,9 @@
         }
       });
 
-      // 觸發大事件
+      // 觸發大事件 (觸發後消失)
       events.forEach(e => {
-        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 40) {
+        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 35) {
           e.triggered = true;
           gameState = 'PAUSED';
           eventTitle.innerText = e.title;
@@ -417,6 +416,7 @@
         }
       });
 
+      // 抵達終點
       if (player.x >= worldWidth - 100) {
         gameState = 'END';
         finalScore.innerHTML = `你成功陪偶像走完了這段精彩旅程！<br>獲得筒筒數量：<b>${score}</b> 個`;
@@ -425,22 +425,20 @@
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      const groundY = getGroundY();
-
-      // 1. 地面下方的暗色區與粉色地平線
+      // 1. 地面與地下區域
       ctx.fillStyle = '#101026';
-      ctx.fillRect(0, groundY, worldWidth, canvas.height - groundY);
+      ctx.fillRect(0, GROUND_Y, worldWidth, CANVAS_HEIGHT - GROUND_Y);
       
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(0, groundY);
-      ctx.lineTo(worldWidth, groundY);
+      ctx.moveTo(0, GROUND_Y);
+      ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
       // 2. 繪製 small.png (小收集物)
@@ -460,19 +458,18 @@
         }
       });
 
-      // 3. 繪製 big.png (大事件 - 未觸發才畫，腳底對齊地面)
+      // 3. 繪製 big.png (大事件 - 未觸發才畫，踩在紅線上)
       events.forEach(e => {
         if (!e.triggered) {
-          const bigW = 65; 
+          const bigW = 60; 
           if (imgBig.complete && imgBig.naturalWidth !== 0) {
             const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
             const bigH = bigW * aspect;
-            // Y 軸填入 groundY - bigH 確保腳底完美踩在紅線上
-            ctx.drawImage(imgBig, e.x - bigW/2, groundY - bigH, bigW, bigH);
+            ctx.drawImage(imgBig, e.x - bigW/2, GROUND_Y - bigH, bigW, bigH);
           } else {
             ctx.fillStyle = '#ffa502';
             ctx.beginPath();
-            ctx.arc(e.x, groundY - 30, 20, 0, Math.PI * 2);
+            ctx.arc(e.x, GROUND_Y - 25, 18, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -480,11 +477,11 @@
 
       // 終點旗幟
       ctx.fillStyle = '#2ed573';
-      ctx.fillRect(worldWidth - 100, groundY - 100, 10, 100);
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText('FINISH', worldWidth - 95, groundY - 110);
+      ctx.fillRect(worldWidth - 100, GROUND_Y - 90, 8, 90);
+      ctx.font = 'bold 13px Arial';
+      ctx.fillText('FINISH', worldWidth - 95, GROUND_Y - 98);
 
-      // 4. 繪製主角 (帶跑步左右搖擺特效)
+      // 4. 繪製主角 (帶跑步搖擺)
       ctx.save();
 
       const centerX = player.x + player.width / 2;
@@ -515,7 +512,7 @@
       ctx.restore();
       ctx.restore();
 
-      // UI 收集分數
+      // 5. UI 分數顯示 (固定在左上角)
       if (gameState === 'PLAYING' || gameState === 'PAUSED') {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px Arial';
