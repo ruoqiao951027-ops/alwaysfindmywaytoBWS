@@ -96,13 +96,13 @@
       transition: width 0.1s linear;
     }
 
-   /* 手指圖示：220px 巨型手指定位修正 */
+  /* 手指圖示：200px 定位與動畫修正 */
 .finger-icon {
   position: absolute;
-  right: -110px; /* 將定位推至手指寬度的一半，讓手指中心/指尖精準掛在進度條最右端 */
+  right: -100px; /* 推至寬度的一半 (200px / 2)，讓手指中心精準對齊進度條最右端 */
   top: 50%;
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
@@ -112,25 +112,24 @@
   animation: fingerJump 1.5s infinite steps(1);
 }
 
-    /* 手指兩角度瞬間跳動 Keyframes */
-    @-webkit-keyframes fingerJump {
-      0% {
-        transform: translateY(-50%) rotate(-150deg);
-      }
-      50% {
-        transform: translateY(-50%) rotate(15deg);
-      }
-    }
+/* 手指兩角度瞬間跳動 Keyframes */
+@-webkit-keyframes fingerJump {
+  0% {
+    transform: translateY(-50%) rotate(-15deg);
+  }
+  50% {
+    transform: translateY(-50%) rotate(15deg);
+  }
+}
 
-    @keyframes fingerJump {
-      0% {
-        transform: translateY(-50%) rotate(-15deg);
-      }
-      50% {
-        transform: translateY(-50%) rotate(15deg);
-      }
-    }
-
+@keyframes fingerJump {
+  0% {
+    transform: translateY(-50%) rotate(-15deg);
+  }
+  50% {
+    transform: translateY(-50%) rotate(15deg);
+  }
+}
     /* 2. 介紹文字畫面 */
     #intro-screen {
       position: fixed;
