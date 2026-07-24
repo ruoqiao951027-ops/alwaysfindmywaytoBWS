@@ -25,13 +25,13 @@
       align-items: center;
     }
 
-    /* 遊戲容器：固定 16:9 比例，自動適應手機螢幕不變形 */
+    /* 固定 16:9 比例等比例縮放 */
     #game-wrapper {
       position: relative;
       width: 100vw;
       height: 56.25vw; /* 16:9 */
       max-height: 100vh;
-      max-width: 177.78vh; /* 16:9 */
+      max-width: 177.78vh;
       background: #1a1a2e;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0,0,0,0.8);
@@ -87,21 +87,21 @@
     }
 
     h1 {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       color: #ff2a74;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     p {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       line-height: 1.5;
       margin-bottom: 15px;
-      max-width: 480px;
+      max-width: 450px;
     }
 
     .btn {
-      padding: 10px 25px;
-      font-size: 1rem;
+      padding: 8px 22px;
+      font-size: 0.95rem;
       font-weight: bold;
       color: #fff;
       background: linear-gradient(45deg, #ff2a74, #ff758c);
@@ -115,15 +115,15 @@
       transform: scale(0.95);
     }
 
-    /* 手機控制按鈕 */
+    /* 抬高控制按鈕位置，避免被手機底部選單或 Safari 工具列擋住 */
     .controls {
       position: absolute;
-      bottom: 15px;
+      bottom: 30px; /* 向上抬高 */
       left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
-      padding: 0 25px;
+      padding: 0 35px;
       pointer-events: none;
       z-index: 5;
     }
@@ -135,11 +135,11 @@
     }
 
     .arrow-btn {
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
       object-fit: contain;
       cursor: pointer;
-      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
     }
 
     #btn-left {
@@ -155,10 +155,10 @@
     }
 
     .touch-btn {
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
       background: rgba(255, 255, 255, 0.25);
-      border: 2px solid rgba(255, 255, 255, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.7);
       border-radius: 50%;
       display: flex;
       justify-content: center;
@@ -168,6 +168,7 @@
       font-weight: bold;
       backdrop-filter: blur(5px);
       pointer-events: auto;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.6);
     }
 
     #event-modal {
@@ -190,7 +191,6 @@
   <audio id="game-bgm" src="game.mp3" loop></audio>
 
   <div id="game-wrapper">
-    <!-- 固定內部解析度為 800x450，防止任何壓扁變形 -->
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
     <div class="controls">
@@ -236,12 +236,10 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // 固定標準邏輯解析度 (防止手機畫面壓扁)
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
-    const GROUND_Y = 360; // 地面高度固在 y = 360
+    const GROUND_Y = 360; // 地面高度固定
 
-    // 載入圖片
     const imgSmall = new Image();
     imgSmall.src = 'small.png';
 
@@ -300,8 +298,8 @@
         if (!events.some(e => Math.abs(e.x - x) < 70)) {
           collectibles.push({
             x: x,
-            y: GROUND_Y - 35 - (Math.random() > 0.5 ? 45 : 0),
-            targetWidth: 50, // 加大 small 尺寸
+            y: GROUND_Y - 38 - (Math.random() > 0.5 ? 45 : 0),
+            targetWidth: 54, // small 適度微調放大
             collected: false
           });
         }
@@ -382,14 +380,12 @@
       player.vy += player.gravity;
       player.y += player.vy;
 
-      // 著地判定
       if (player.y + player.height >= GROUND_Y) {
         player.y = GROUND_Y - player.height;
         player.vy = 0;
         player.isGrounded = true;
       }
 
-      // 攝影機跟隨
       cameraX = player.x - CANVAS_WIDTH / 3;
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
@@ -416,7 +412,6 @@
         }
       });
 
-      // 抵達終點
       if (player.x >= worldWidth - 100) {
         gameState = 'END';
         finalScore.innerHTML = `你成功陪偶像走完了這段精彩旅程！<br>獲得筒筒數量：<b>${score}</b> 個`;
@@ -430,7 +425,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 地面與地下區域
+      // 地面
       ctx.fillStyle = '#101026';
       ctx.fillRect(0, GROUND_Y, worldWidth, CANVAS_HEIGHT - GROUND_Y);
       
@@ -441,7 +436,7 @@
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 2. 繪製 small.png (小收集物)
+      // 繪製 small.png
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth !== 0) {
@@ -458,7 +453,7 @@
         }
       });
 
-      // 3. 繪製 big.png (大事件 - 未觸發才畫，踩在紅線上)
+      // 繪製 big.png
       events.forEach(e => {
         if (!e.triggered) {
           const bigW = 60; 
@@ -481,7 +476,7 @@
       ctx.font = 'bold 13px Arial';
       ctx.fillText('FINISH', worldWidth - 95, GROUND_Y - 98);
 
-      // 4. 繪製主角 (帶跑步搖擺)
+      // 繪製主角
       ctx.save();
 
       const centerX = player.x + player.width / 2;
@@ -512,12 +507,15 @@
       ctx.restore();
       ctx.restore();
 
-      // 5. UI 分數顯示 (固定在左上角)
+      // UI 分數顯示 (加強陰影邊框)
       if (gameState === 'PLAYING' || gameState === 'PAUSED') {
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText(`收集筒筒數: ${score}`, 20, 30);
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`收集筒筒數: ${score}`, 25, 35);
+        ctx.shadowBlur = 0; // 重置陰影
       }
     }
 
