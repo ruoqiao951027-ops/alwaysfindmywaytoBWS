@@ -142,7 +142,7 @@
 </head>
 <body>
 
-  <!-- 小遊戲背景音樂改為 game.mp3 -->
+  <!-- 小遊戲背景音樂 game.mp3 -->
   <audio id="game-bgm" src="game.mp3" loop></audio>
 
   <div id="game-container">
@@ -166,7 +166,7 @@
         歡迎來到偶像的回顧之旅！<br>
         • 使用畫面左下角的 <b>◀ ▶</b> 移動<br>
         • 使用右下角的 <b>▲</b> 跳躍收集星光點點<br>
-        • 沿途觸發<b>星形徽章</b>重溫歷程大事件！
+        • 沿途觸發<b>大事件</b>重溫歷程！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -234,7 +234,7 @@
     const player = {
       x: 100,
       y: 0,
-      width: 50,  // 加大圖片顯示尺寸
+      width: 50,  
       height: 60,
       vx: 0,
       vy: 0,
@@ -242,7 +242,7 @@
       jumpPower: -12,
       gravity: 0.6,
       isGrounded: false,
-      facing: 'right', // 紀錄面朝方向 'left' 或 'right'
+      facing: 'right', // 紀錄面朝方向
       animTimer: 0     // 動畫步頻計時器
     };
 
@@ -266,7 +266,7 @@
           collectibles.push({
             x: x,
             y: canvas.height - 150 - (Math.random() > 0.5 ? 60 : 0),
-            size: 24, // 圖示大小
+            targetWidth: 50, // 放大 small 尺寸（可依需求微調）
             collected: false
           });
         }
@@ -337,14 +337,14 @@
       if (keys.left) {
         player.vx = -player.speed;
         player.facing = 'left';
-        player.animTimer += 0.15; // 跑動計時，決定搖擺角度
+        player.animTimer += 0.15;
       } else if (keys.right) {
         player.vx = player.speed;
         player.facing = 'right';
         player.animTimer += 0.15;
       } else {
         player.vx = 0;
-        player.animTimer = 0; // 靜止時重置搖擺
+        player.animTimer = 0;
       }
 
       player.x += player.vx;
@@ -363,11 +363,11 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
 
-      // 碰撞檢測 (收集點點)
+      // 碰撞檢測 (收集小圖標)
       collectibles.forEach(c => {
         if (!c.collected) {
           let dist = Math.hypot((player.x + player.width/2) - c.x, (player.y + player.height/2) - c.y);
-          if (dist < c.size + player.width/2) {
+          if (dist < c.targetWidth/2 + player.width/2) {
             c.collected = true;
             score += 10;
           }
@@ -376,7 +376,7 @@
 
       // 觸發大事件
       events.forEach(e => {
-        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 30) {
+        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 40) {
           e.triggered = true;
           gameState = 'PAUSED';
           eventTitle.innerText = e.title;
@@ -388,7 +388,7 @@
       // 抵達終點
       if (player.x >= worldWidth - 100) {
         gameState = 'END';
-        finalScore.innerHTML = `你成功陪偶像走完了這段精彩旅程！<br>獲得星光熱情值：<b>${score}</b> 分`;
+        finalScore.innerHTML = `你成功陪偶像走完了這段精彩旅程！<br>獲得筒筒數量：<b>${score}</b> 個`;
         endScreen.classList.remove('hidden');
       }
     }
@@ -412,37 +412,36 @@
       ctx.lineTo(worldWidth, groundY);
       ctx.stroke();
 
-      // 1. 繪製收集點點 (small.png)
+      // 1. 繪製收集圖標 (small.png - 維持原始比例放大)
       collectibles.forEach(c => {
         if (!c.collected) {
-          if (imgSmall.complete) {
-            ctx.drawImage(imgSmall, c.x - c.size/2, c.y - c.size/2, c.size, c.size);
+          if (imgSmall.complete && imgSmall.naturalWidth !== 0) {
+            const aspect = imgSmall.naturalHeight / imgSmall.naturalWidth;
+            const drawW = c.targetWidth;
+            const drawH = drawW * aspect;
+            ctx.drawImage(imgSmall, c.x - drawW/2, c.y - drawH/2, drawW, drawH);
           } else {
-            // 備用紅色圓點
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+            ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
             ctx.fillStyle = '#ff4757';
             ctx.fill();
           }
         }
       });
 
-      // 2. 繪製大事件 (big.png)
+      // 2. 繪製大事件 (big.png - 維持原始比例放大，無提示文字)
       events.forEach(e => {
-        const bigSize = 48;
-        if (imgBig.complete) {
-          ctx.drawImage(imgBig, e.x - bigSize/2, groundY - 60, bigSize, bigSize);
+        const bigW = 90; // 放大 big 的寬度
+        if (imgBig.complete && imgBig.naturalWidth !== 0) {
+          const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
+          const bigH = bigW * aspect;
+          ctx.drawImage(imgBig, e.x - bigW/2, groundY - bigH, bigW, bigH);
         } else {
           ctx.fillStyle = e.triggered ? '#70a1ff' : '#ffa502';
           ctx.beginPath();
-          ctx.arc(e.x, groundY - 40, 20, 0, Math.PI * 2);
+          ctx.arc(e.x, groundY - 40, 25, 0, Math.PI * 2);
           ctx.fill();
         }
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(e.triggered ? '✓ 已回顧' : '★ 大事件', e.x, groundY - 70);
       });
 
       // 繪製終點旗幟
@@ -454,19 +453,17 @@
       // 3. 繪製玩家主角 (runright.png / runleft.png + 跑動搖擺特效)
       ctx.save();
 
-      // 計算主角中心點
       const centerX = player.x + player.width / 2;
       const centerY = player.y + player.height / 2;
       ctx.translate(centerX, centerY);
 
-      // 如果正在地面移動，產生正弦波左右擺動 (-12度 到 +12度 之間)
+      // 跑動搖擺動畫
       let rotationAngle = 0;
       if (player.vx !== 0 && player.isGrounded) {
         rotationAngle = Math.sin(player.animTimer) * (12 * Math.PI / 180);
       }
       ctx.rotate(rotationAngle);
 
-      // 判斷向左或向右圖示
       let currentImg = (player.facing === 'left') ? imgRunLeft : imgRunRight;
 
       if (currentImg.complete && currentImg.naturalWidth !== 0) {
@@ -478,7 +475,6 @@
           player.height
         );
       } else {
-        // 備用圖塊（若圖片載入失敗時顯示）
         ctx.fillStyle = '#ff758c';
         ctx.fillRect(-player.width/2, -player.height/2, player.width, player.height);
       }
@@ -487,12 +483,12 @@
 
       ctx.restore();
 
-      // 繪製 UI 分數
+      // 繪製 UI 收集分數 (已更改標題為 收集筒筒數)
       if (gameState === 'PLAYING' || gameState === 'PAUSED') {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText(`收集點點分數: ${score}`, 20, 35);
+        ctx.fillText(`收集筒筒數: ${score}`, 20, 35);
       }
     }
 
