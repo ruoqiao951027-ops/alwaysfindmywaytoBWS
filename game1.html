@@ -214,14 +214,13 @@
       opacity: 0.9;
     }
 
-    /* 大事件視窗縮窄，按鈕移至視窗外側右方 */
     #event-modal {
       position: relative;
       background: rgba(20, 20, 35, 0.95);
       border: 2px solid #87cefa;
       border-radius: 16px;
       width: 75%;
-      max-width: 380px; /* 視窗寬度縮小 */
+      max-width: 380px;
       max-height: 80vh;
       padding: 15px;
       display: flex;
@@ -229,7 +228,7 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      overflow: visible; /* 允許按鈕掛在視窗外面 */
+      overflow: visible;
     }
 
     #event-title {
@@ -249,10 +248,10 @@
       background: transparent;
     }
 
-    /* 繼續前進按鈕於面板外部右方 */
+    /* 繼續前進按鈕再再往右邊移一點 */
     #close-event-btn {
       position: absolute;
-      right: -100px; /* 移到面板右邊外面 */
+      right: -130px;
       top: 50%;
       transform: translateY(-50%);
       padding: 12px 18px;
@@ -266,7 +265,6 @@
 </head>
 <body>
 
-  <!-- 音訊檔案 (包含結局音效 end1.mp3 與 end2.mp3) -->
   <audio id="game-bgm" src="game.mp3" loop preload="auto"></audio>
   <audio id="sound1" src="sound1.mp3" preload="auto"></audio>
   <audio id="sound2" src="sound2.mp3" preload="auto"></audio>
@@ -274,7 +272,7 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <div id="score-badge">收集筒筒數: <span id="total-score">0</span></div>
+    <div id="score-badge">得分: <span id="total-score">0</span> / 15,000,000</div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -299,14 +297,14 @@
       <h1>偶像星光歷程展</h1>
       <p>
         歡迎來到偶像的回顧之旅！<br>
-        • 使用左下角箭頭移動與爬樓梯<br>
-        • 使用右下角 <b>▲</b> 跳躍收集高空筒筒與跨越平台<br>
-        • 挑戰全收集解鎖隱藏特殊結局！
+        • 使用左右箭頭移動與爬樓梯<br>
+        • 使用右下角 <b>▲</b> 跳躍收集高空與階梯上的筒筒<br>
+        • 全關卡共 100 個小型筒筒與 10 大事件，滿分 1,500 萬！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
 
-    <!-- 大事件彈窗 (按鈕位在視窗右方外側) -->
+    <!-- 大事件彈窗 -->
     <div id="event-screen" class="screen-overlay hidden">
       <div id="event-modal">
         <h2 id="event-title">大事件標題</h2>
@@ -337,7 +335,8 @@
     const sfxEnd1 = document.getElementById('sound-end1');
     const sfxEnd2 = document.getElementById('sound-end2');
 
-    gameBgm.volume = 0.5;
+    // 背景音量調小一點點（0.3）
+    gameBgm.volume = 0.3;
     let musicStarted = false;
 
     function initAudio() {
@@ -364,8 +363,8 @@
       } catch (e) {}
     }
 
+    // 播放結局語音，不暫停背景音樂
     function playEndSound(isPerfect) {
-      gameBgm.pause();
       if (isPerfect) {
         sfxEnd2.currentTime = 0;
         sfxEnd2.volume = 1.0;
@@ -406,7 +405,7 @@
     let gameState = 'START';
     let totalScore = 0;
     let cameraX = 0;
-    let worldWidth = 16000;
+    let worldWidth = 22000;
 
     const player = {
       x: 100,
@@ -426,7 +425,6 @@
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
 
-    // 修改：新版大事件標題列表
     const eventTitles = [
       '2010年模特兒出道',
       '2015年首次米蘭伸展台',
@@ -445,48 +443,59 @@
     let platforms = [];
     let curvedTerrains = [];
 
-    // 修改：大量增加階梯數量，部分 Small 筒筒放置於高空需跳躍收集
+    // 精確生成 100 Small + 10 Big
     function generateLevelData() {
       collectibles = [];
       eventNodes = [];
       platforms = [];
       curvedTerrains = [];
 
-      let currentX = 400;
-      const stepX = 240;
+      let currentX = 350;
 
-      for (let i = 0; i < 4; i++) {
-        // 高空 Small，需要跳躍
-        collectibles.push({ x: currentX, yOffset: 160 + i * 20, collected: false });
-        currentX += stepX;
+      // 起跑區域：前置 5 個 Small 筒筒 (1~5)
+      for (let i = 0; i < 5; i++) {
+        const yOff = (i % 2 === 1) ? 140 : 45;
+        collectibles.push({ x: currentX, yOffset: yOff, collected: false });
+        currentX += 160;
       }
 
+      // 10 個 Big 大事件區塊，每個區塊配 9 個 Small 筒筒 (共 90 個)
       for (let b = 0; b < 10; b++) {
         currentX += 120;
         const layoutType = b % 5;
         let bigYOffset = 0;
 
         if (layoutType === 0) {
-          // 多重階梯爬升與下降
-          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 80, h: 40 });
-          platforms.push({ x: currentX + 70, y: GROUND_Y - 80, w: 80, h: 80 });
-          platforms.push({ x: currentX + 140, y: GROUND_Y - 120, w: 140, h: 120 });
-          platforms.push({ x: currentX + 275, y: GROUND_Y - 70, w: 80, h: 70 });
+          // 4 階步梯 + 跳台
+          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 75, h: 40 });
+          platforms.push({ x: currentX + 65, y: GROUND_Y - 80, w: 75, h: 80 });
+          platforms.push({ x: currentX + 130, y: GROUND_Y - 120, w: 75, h: 120 });
+          platforms.push({ x: currentX + 195, y: GROUND_Y - 160, w: 120, h: 160 });
+          platforms.push({ x: currentX + 330, y: GROUND_Y - 80, w: 80, h: 80 });
 
-          bigYOffset = 120;
+          // 階梯前、中、上方與後方放置 Small (3 個)
+          collectibles.push({ x: currentX + 30, yOffset: 90, collected: false });
+          collectibles.push({ x: currentX + 230, yOffset: 210, collected: false });
+          collectibles.push({ x: currentX + 350, yOffset: 130, collected: false });
+
+          bigYOffset = 160;
           eventNodes.push({
-            x: currentX + 210, yOffset: bigYOffset,
+            x: currentX + 235, yOffset: bigYOffset,
             title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
-          currentX += 400;
+          currentX += 450;
 
         } else if (layoutType === 1) {
-          // 密集的連續階梯與懸空跳台
+          // 連續陡峭雙層高台
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 70, h: 50 });
-          platforms.push({ x: currentX + 60, y: GROUND_Y - 100, w: 70, h: 100 });
-          platforms.push({ x: currentX + 150, y: GROUND_Y - 150, w: 120, h: 20 }); // 高空跳台
-          platforms.push({ x: currentX + 290, y: GROUND_Y - 90, w: 70, h: 90 });
+          platforms.push({ x: currentX + 80, y: GROUND_Y - 100, w: 70, h: 100 });
+          platforms.push({ x: currentX + 170, y: GROUND_Y - 150, w: 120, h: 20 });
+          platforms.push({ x: currentX + 310, y: GROUND_Y - 90, w: 70, h: 90 });
+
+          collectibles.push({ x: currentX - 30, yOffset: 45, collected: false });
+          collectibles.push({ x: currentX + 210, yOffset: 200, collected: false });
+          collectibles.push({ x: currentX + 325, yOffset: 140, collected: false });
 
           bigYOffset = 150;
           eventNodes.push({
@@ -494,69 +503,95 @@
             title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
-          currentX += 420;
+          currentX += 440;
 
         } else if (layoutType === 2) {
-          // 弧形谷與高台雙重階梯
-          curvedTerrains.push({ x: currentX, w: 350, height: 60, type: 'concave' });
-          platforms.push({ x: currentX + 330, y: GROUND_Y - 60, w: 80, h: 60 });
-          platforms.push({ x: currentX + 400, y: GROUND_Y - 110, w: 140, h: 110 });
+          // 弧形下凹谷 + 多重躍升台
+          curvedTerrains.push({ x: currentX, w: 300, height: 60, type: 'concave' });
+          platforms.push({ x: currentX + 280, y: GROUND_Y - 60, w: 70, h: 60 });
+          platforms.push({ x: currentX + 350, y: GROUND_Y - 120, w: 140, h: 120 });
+          platforms.push({ x: currentX + 500, y: GROUND_Y - 60, w: 70, h: 60 });
+
+          collectibles.push({ x: currentX + 130, yOffset: -10, collected: false });
+          collectibles.push({ x: currentX + 400, yOffset: 175, collected: false });
+          collectibles.push({ x: currentX + 520, yOffset: 110, collected: false });
+
+          bigYOffset = 120;
+          eventNodes.push({
+            x: currentX + 420, yOffset: bigYOffset,
+            title: eventTitles[b], imgIndex: b + 1,
+            triggered: false, collected: false
+          });
+          currentX += 600;
+
+        } else if (layoutType === 3) {
+          // 雙高台對跳 + 懸空階梯
+          platforms.push({ x: currentX, y: GROUND_Y - 70, w: 90, h: 70 });
+          platforms.push({ x: currentX + 120, y: GROUND_Y - 130, w: 80, h: 20 });
+          platforms.push({ x: currentX + 230, y: GROUND_Y - 180, w: 110, h: 20 });
+          platforms.push({ x: currentX + 360, y: GROUND_Y - 90, w: 90, h: 90 });
+
+          collectibles.push({ x: currentX + 30, yOffset: 120, collected: false });
+          collectibles.push({ x: currentX + 270, yOffset: 235, collected: false });
+          collectibles.push({ x: currentX + 390, yOffset: 140, collected: false });
+
+          bigYOffset = 180;
+          eventNodes.push({
+            x: currentX + 270, yOffset: bigYOffset,
+            title: eventTitles[b], imgIndex: b + 1,
+            triggered: false, collected: false
+          });
+          currentX += 480;
+
+        } else {
+          // 凸丘 + 鋸齒階梯
+          curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'convex' });
+          platforms.push({ x: currentX + 250, y: GROUND_Y - 60, w: 60, h: 60 });
+          platforms.push({ x: currentX + 310, y: GROUND_Y - 110, w: 130, h: 110 });
+          platforms.push({ x: currentX + 450, y: GROUND_Y - 50, w: 60, h: 50 });
+
+          collectibles.push({ x: currentX + 110, yOffset: 100, collected: false });
+          collectibles.push({ x: currentX + 360, yOffset: 165, collected: false });
+          collectibles.push({ x: currentX + 460, yOffset: 100, collected: false });
 
           bigYOffset = 110;
           eventNodes.push({
-            x: currentX + 470, yOffset: bigYOffset,
+            x: currentX + 365, yOffset: bigYOffset,
             title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
-          currentX += 580;
-
-        } else if (layoutType === 3) {
-          // 山谷對跳高台 + 中間雙跳台
-          platforms.push({ x: currentX, y: GROUND_Y - 80, w: 100, h: 80 });
-          platforms.push({ x: currentX + 130, y: GROUND_Y - 130, w: 80, h: 20 });
-          platforms.push({ x: currentX + 240, y: GROUND_Y - 80, w: 120, h: 80 });
-
-          bigYOffset = 80;
-          eventNodes.push({
-            x: currentX + 300, yOffset: bigYOffset,
-            title: eventTitles[b], imgIndex: b + 1,
-            triggered: false, collected: false
-          });
-          currentX += 420;
-
-        } else {
-          // 凸型丘與陡峭階梯
-          curvedTerrains.push({ x: currentX, w: 300, height: 60, type: 'convex' });
-          platforms.push({ x: currentX + 290, y: GROUND_Y - 50, w: 70, h: 50 });
-          platforms.push({ x: currentX + 350, y: GROUND_Y - 100, w: 130, h: 100 });
-
-          bigYOffset = 100;
-          eventNodes.push({
-            x: currentX + 415, yOffset: bigYOffset,
-            title: eventTitles[b], imgIndex: b + 1,
-            triggered: false, collected: false
-          });
-          currentX += 520;
+          currentX += 540;
         }
 
-        // 生成 Small 筒筒（安排交替的高空跳躍位置）
-        if (b < 9) {
-          for (let s = 0; s < 5; s++) {
-            // s % 2 === 1 時需要 jump 才可以吃到
-            let yOff = (s % 2 === 1) ? 175 : 55;
-            collectibles.push({ x: currentX, yOffset: yOff, collected: false });
-            currentX += stepX;
+        // 大事件之間的銜接階梯區段，放置剩餘 6 個 Small
+        for (let s = 0; s < 6; s++) {
+          const isHigh = (s % 2 === 1);
+          if (s === 2 || s === 4) {
+            platforms.push({ x: currentX - 20, y: GROUND_Y - (isHigh ? 80 : 40), w: 70, h: isHigh ? 80 : 40 });
           }
+          collectibles.push({
+            x: currentX,
+            yOffset: isHigh ? 150 : 45,
+            collected: false
+          });
+          currentX += 170;
         }
       }
 
-      currentX += 100;
-      for (let i = 0; i < 4; i++) {
-        collectibles.push({ x: currentX, yOffset: 160, collected: false });
-        currentX += stepX;
+      // 終點前區域：補滿剩餘 5 個 Small 筒筒 (96~100)
+      for (let i = 0; i < 5; i++) {
+        if (i === 2) {
+          platforms.push({ x: currentX, y: GROUND_Y - 60, w: 80, h: 60 });
+        }
+        collectibles.push({
+          x: currentX,
+          yOffset: (i % 2 === 1) ? 140 : 45,
+          collected: false
+        });
+        currentX += 160;
       }
 
-      worldWidth = currentX + 800;
+      worldWidth = currentX + 600;
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -708,11 +743,11 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 抵達終點結算
-      if (player.x + player.width >= worldWidth - 400) {
+      // 抵達終點
+      if (player.x + player.width >= worldWidth - 350) {
         gameState = 'END';
 
-        // 檢查是否達成全收集 (所有 small 和 big 都吃到)
+        // 判定全收集條件
         const allSmallCollected = collectibles.every(c => c.collected);
         const allBigCollected = eventNodes.every(e => e.collected);
         const isPerfectEnd = allSmallCollected && allBigCollected;
@@ -720,11 +755,11 @@
         playEndSound(isPerfectEnd);
 
         if (isPerfectEnd) {
-          endTitle.innerText = "🌟 完美大滿貫結局！";
-          finalScore.innerHTML = `太不可思議了！你收集到了全數的歷程照片與星光筒筒！<br>最終完美總得分：<b>${totalScore.toLocaleString()}</b> 分！`;
+          endTitle.innerText = "🌟 完美滿貫結局！";
+          finalScore.innerHTML = `完美達成！你收集到了全數 100 個筒筒與 10 大歷程！<br>最終完美總得分：<b>${totalScore.toLocaleString()} / 15,000,000</b> 分！`;
         } else {
           endTitle.innerText = "🎉 抵達巡演終點！";
-          finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終總得分：<b>${totalScore.toLocaleString()}</b> 分！`;
+          finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終總得分：<b>${totalScore.toLocaleString()} / 15,000,000</b> 分！`;
         }
 
         endScreen.classList.remove('hidden');
@@ -780,7 +815,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 繪製弧形與地形線條
+      // 1. 地球線條
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -801,7 +836,7 @@
       }
       ctx.stroke();
 
-      // 2. 畫階梯與高台平台
+      // 2. 畫階梯高台
       platforms.forEach(p => {
         ctx.fillStyle = 'rgba(135, 206, 250, 0.35)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
