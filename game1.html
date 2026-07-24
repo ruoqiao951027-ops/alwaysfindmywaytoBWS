@@ -159,7 +159,6 @@
       align-items: center;
     }
 
-    /* 修正：箭頭符號位置下移至圖案中央 */
     .arrow-label {
       position: absolute;
       top: 38px;
@@ -242,7 +241,6 @@
   <audio id="sound2" src="sound2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 修正後的計分 UI -->
     <div id="score-badge">收集筒筒數: <span id="total-score">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -301,7 +299,7 @@
     const CANVAS_HEIGHT = 450;
     const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.65);
 
-    // 音訊控制
+    // 音訊安全播放
     const gameBgm = document.getElementById('game-bgm');
     const sfxSound1 = document.getElementById('sound1');
     const sfxSound2 = document.getElementById('sound2');
@@ -312,20 +310,24 @@
       if (!musicStarted) {
         gameBgm.play().then(() => {
           musicStarted = true;
-        }).catch(e => console.log("等待互動播放音樂:", e));
+        }).catch(() => {});
       }
     }
 
     function playSound1() {
-      const soundClone = sfxSound1.cloneNode();
-      soundClone.volume = 0.8;
-      soundClone.play().catch(() => {});
+      try {
+        sfxSound1.currentTime = 0;
+        sfxSound1.volume = 0.8;
+        sfxSound1.play().catch(() => {});
+      } catch (e) {}
     }
 
     function playSound2() {
-      sfxSound2.currentTime = 0;
-      sfxSound2.volume = 1.0;
-      sfxSound2.play().catch(() => {});
+      try {
+        sfxSound2.currentTime = 0;
+        sfxSound2.volume = 1.0;
+        sfxSound2.play().catch(() => {});
+      } catch (e) {}
     }
 
     window.addEventListener('click', initAudio, { once: true });
@@ -355,16 +357,14 @@
     const finalScore = document.getElementById('final-score');
     const totalScoreEl = document.getElementById('total-score');
 
-    // 遊戲狀態與得分計算 (Small: 100000, Big: 500000)
     let gameState = 'START';
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 16000;
 
-    // 玩家設定
     const player = {
       x: 100,
-      y: 0,
+      y: GROUND_Y - 138,
       width: 110,
       height: 138,
       vx: 0,
@@ -399,8 +399,8 @@
 
     let collectibles = [];
     let eventNodes = [];
-    let platforms = []; // 淺藍色階梯與高台
-    let uValleys = [];  // 凹字形弧形谷地形
+    let platforms = [];
+    let uValleys = [];
 
     function generateLevelData() {
       collectibles = [];
@@ -411,22 +411,18 @@
       let currentX = 400;
       const stepX = 130;
 
-      // 開頭 5 個 small（yOffset 修正為至少 50，確保完全不掉到地平線下）
       const startHeights = [50, 110, 190, 120, 60];
       for (let i = 0; i < 5; i++) {
         collectibles.push({ x: currentX, yOffset: startHeights[i], collected: false });
         currentX += stepX;
       }
 
-      // 生成 10 個多變區域
       for (let b = 0; b < 10; b++) {
         currentX += 150;
-        const layoutType = b % 4; // 0: 上樓梯滑梯, 1: 凹字弧形谷, 2: 高台山谷挑戰, 3: 階梯金字塔
-
+        const layoutType = b % 4;
         let bigYOffset = 0;
 
         if (layoutType === 0) {
-          // 階梯上樓高台
           platforms.push({ x: currentX, y: GROUND_Y - 45, w: 90, h: 45 });
           platforms.push({ x: currentX + 75, y: GROUND_Y - 90, w: 90, h: 90 });
           platforms.push({ x: currentX + 150, y: GROUND_Y - 135, w: 260, h: 135 });
@@ -441,12 +437,7 @@
           currentX += 450;
 
         } else if (layoutType === 1) {
-          // 凹字形弧形谷 (U-Shape Valley)
-          uValleys.push({
-            x: currentX,
-            w: 360,
-            depth: 70
-          });
+          uValleys.push({ x: currentX, w: 360, depth: 70 });
 
           bigYOffset = 0;
           eventNodes.push({
@@ -458,11 +449,8 @@
           currentX += 400;
 
         } else if (layoutType === 2) {
-          // 高台山谷地形：高台 A -> 中間空隙(山谷/地面) -> 爬階梯上高台 B
-          // 高台 A
           platforms.push({ x: currentX, y: GROUND_Y - 110, w: 160, h: 110 });
           
-          // Big 放在高台 A 頂端
           bigYOffset = 110;
           eventNodes.push({
             x: currentX + 80, yOffset: bigYOffset,
@@ -470,16 +458,12 @@
             triggered: false, collected: false
           });
 
-          // 山谷空隙中間的救援階梯（掉到谷底後可以爬回右側）
           platforms.push({ x: currentX + 260, y: GROUND_Y - 50, w: 70, h: 50 });
-          
-          // 高台 B
           platforms.push({ x: currentX + 370, y: GROUND_Y - 110, w: 180, h: 110 });
 
           currentX += 580;
 
         } else {
-          // 階梯金字塔
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 80, h: 50 });
           platforms.push({ x: currentX + 65, y: GROUND_Y - 100, w: 180, h: 100 });
           platforms.push({ x: currentX + 230, y: GROUND_Y - 50, w: 80, h: 50 });
@@ -494,10 +478,9 @@
           currentX += 380;
         }
 
-        // 生成 Small 筒筒（保證高於地平線，配合地形變化）
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
-            let yOff = 50; // 安全基準高度，防止沉入地底
+            let yOff = 50;
             const hPattern = (s + b) % 5;
             if (hPattern === 1) yOff = 130;
             if (hPattern === 2) yOff = 220; 
@@ -539,6 +522,7 @@
 
     const setupTouchBtn = (elementId, keyName) => {
       const el = document.getElementById(elementId);
+      if (!el) return;
       const start = (e) => { e.preventDefault(); initAudio(); keys[keyName] = true; };
       const end = (e) => { e.preventDefault(); keys[keyName] = false; };
       el.addEventListener('touchstart', start);
@@ -551,16 +535,18 @@
     setupTouchBtn('btn-right', 'right');
 
     const jumpBtn = document.getElementById('btn-jump');
-    const triggerJump = (e) => {
-      if (e) e.preventDefault();
-      initAudio();
-      if (player.isGrounded && gameState === 'PLAYING') {
-        player.vy = player.jumpPower;
-        player.isGrounded = false;
-      }
-    };
-    jumpBtn.addEventListener('touchstart', triggerJump);
-    jumpBtn.addEventListener('mousedown', triggerJump);
+    if (jumpBtn) {
+      const triggerJump = (e) => {
+        if (e) e.preventDefault();
+        initAudio();
+        if (player.isGrounded && gameState === 'PLAYING') {
+          player.vy = player.jumpPower;
+          player.isGrounded = false;
+        }
+      };
+      jumpBtn.addEventListener('touchstart', triggerJump);
+      jumpBtn.addEventListener('mousedown', triggerJump);
+    }
 
     document.getElementById('start-btn').addEventListener('click', () => {
       initAudio();
@@ -598,7 +584,6 @@
       cameraX = 0;
     }
 
-    // 邏輯更新
     function update() {
       if (gameState !== 'PLAYING') return;
 
@@ -617,7 +602,6 @@
 
       player.vy += player.gravity;
 
-      // X 軸移動與高台側邊實體阻擋
       let nextX = player.x + player.vx;
       const feetY = player.y + player.height;
 
@@ -634,21 +618,18 @@
       player.x = nextX;
       player.y += player.vy;
 
-      // Y 軸地面與地形高度計算
       let currentGround = GROUND_Y;
       player.isGrounded = false;
 
-      // 1. 凹字弧形谷高度修正
       const playerCenterX = player.x + player.width * 0.5;
       uValleys.forEach(uv => {
         if (playerCenterX >= uv.x && playerCenterX <= uv.x + uv.w) {
-          const norm = (playerCenterX - uv.x) / uv.w; // 0 ~ 1
+          const norm = (playerCenterX - uv.x) / uv.w;
           const valleyOffset = Math.sin(norm * Math.PI) * uv.depth;
           currentGround = GROUND_Y + valleyOffset;
         }
       });
 
-      // 2. 淺藍階梯/高台頂部踩踏
       platforms.forEach(p => {
         if (player.x + player.width * 0.7 > p.x && player.x + player.width * 0.3 < p.x + p.w) {
           if (player.y + player.height >= p.y - 12 && player.y + player.height <= p.y + 20 && player.vy >= 0) {
@@ -665,19 +646,16 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 終點判定
       if (player.x + player.width >= worldWidth - 400) {
         gameState = 'END';
         finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終總得分：<b>${totalScore.toLocaleString()}</b> 分！`;
         endScreen.classList.remove('hidden');
       }
 
-      // 鏡頭跟隨
       cameraX = player.x - CANVAS_WIDTH / 3;
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 碰撞檢測：Small (+100,000分)
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -693,7 +671,6 @@
         }
       });
 
-      // 碰撞檢測：Big (+500,000分)
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -719,49 +696,37 @@
       });
     }
 
-    // 畫面繪製
     function draw() {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 畫主地平線與凹字弧形谷
+      // 1. 安全繪製地平線與凹字谷（絕不陷入無限死迴圈）
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
+      
+      let stepX = 20;
       ctx.moveTo(0, GROUND_Y);
-
-      let currX = 0;
-      while (currX < worldWidth) {
-        let inValley = false;
+      for (let px = 0; px <= worldWidth; px += stepX) {
+        let py = GROUND_Y;
         for (let uv of uValleys) {
-          if (currX >= uv.x && currX <= uv.x + uv.w) {
-            inValley = true;
-            ctx.lineTo(uv.x, GROUND_Y);
-            // 繪製順暢弧線
-            ctx.quadraticCurveTo(
-              uv.x + uv.w / 2, GROUND_Y + uv.depth * 2,
-              uv.x + uv.w, GROUND_Y
-            );
-            currX = uv.x + uv.w;
+          if (px >= uv.x && px <= uv.x + uv.w) {
+            const norm = (px - uv.x) / uv.w;
+            py = GROUND_Y + Math.sin(norm * Math.PI) * uv.depth;
             break;
           }
         }
-        if (!inValley) {
-          currX += 100;
-          ctx.lineTo(Math.min(currX, worldWidth), GROUND_Y);
-        }
+        ctx.lineTo(px, py);
       }
       ctx.stroke();
 
-      // 2. 畫淺藍色階梯與高台（無黃色邊框）
+      // 2. 畫淺藍色階梯與高台
       platforms.forEach(p => {
-        // 淺藍色半透明填充
         ctx.fillStyle = 'rgba(135, 206, 250, 0.35)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
 
-        // 淺藍色邊框與頂部亮線
         ctx.strokeStyle = '#87cefa';
         ctx.lineWidth = 2;
         ctx.strokeRect(p.x, p.y, p.w, p.h);
@@ -789,7 +754,7 @@
         }
       });
 
-      // 4. 畫 Small 筒筒 (已修正不沉入地平線)
+      // 4. 畫 Small 筒筒
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -837,6 +802,8 @@
       requestAnimationFrame(gameLoop);
     }
 
+    // 初始化關卡並啟動渲染
+    generateLevelData();
     gameLoop();
   </script>
 </body>
