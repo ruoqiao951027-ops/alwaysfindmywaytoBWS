@@ -43,6 +43,32 @@
       height: 100%;
     }
 
+    /* 置頂計分 UI Badge（保證百分百看得到，不被 Canvas 裁切或遮擋） */
+    #score-badge {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.65);
+      border: 2px solid #ff2a74;
+      border-radius: 20px;
+      padding: 6px 16px;
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    #score-badge span {
+      color: #ffd700;
+    }
+
     /* 直向提示：精確置中設定 */
     @media (orientation: portrait) {
       #game-wrapper::after {
@@ -78,7 +104,7 @@
       justify-content: center;
       align-items: center;
       color: #fff;
-      z-index: 10;
+      z-index: 30;
       text-align: center;
       padding: 20px;
     }
@@ -116,10 +142,10 @@
       transform: scale(0.95);
     }
 
-    /* 控制按鈕容器：向上移動 (bottom: 65px) */
+    /* 控制按鈕容器：下去一點 (bottom: 25px) */
     .controls {
       position: absolute;
-      bottom: 45px;
+      bottom: 25px;
       left: 0;
       width: 100%;
       display: flex;
@@ -128,23 +154,46 @@
       padding: 0 30px;
       padding-bottom: env(safe-area-inset-bottom);
       pointer-events: none;
-      z-index: 5;
+      z-index: 10;
     }
 
     .btn-group {
       display: flex;
       gap: 15px;
-      align-items: center;
+      align-items: flex-end;
       pointer-events: auto;
     }
 
-    /* Arrow 按鈕：調大至 95px */
+    /* Arrow 控制區外框與高透明度，上方加上箭頭符號圖案 */
+    .arrow-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .arrow-label {
+      font-size: 1.4rem;
+      color: #ffffff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+      margin-bottom: 2px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    /* Arrow 按鈕：高透明度 (1.0 鮮明度 / 提高對比與透明不遮擋) */
     .arrow-btn {
-      width: 120px;
-      height: 120px;
+      width: 85px;
+      height: 85px;
       object-fit: contain;
       cursor: pointer;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
+      opacity: 0.95;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85));
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .arrow-btn:hover {
+      opacity: 1;
     }
 
     #btn-left {
@@ -159,22 +208,23 @@
       transform: scale(0.9);
     }
 
-    /* 跳躍按鈕 */
+    /* 跳躍按鈕：下去一點 (對齊底部) */
     .touch-btn {
-      width: 55px;
-      height: 55px;
-      background: rgba(255, 255, 255, 0.25);
-      border: 3px solid rgba(255, 255, 255, 0.85);
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.35);
+      border: 3px solid rgba(255, 255, 255, 0.95);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: bold;
       backdrop-filter: blur(4px);
       pointer-events: auto;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.85);
+      opacity: 0.95;
     }
 
     #event-modal {
@@ -198,13 +248,25 @@
   <audio id="game-bgm" src="game.mp3" loop preload="auto"></audio>
 
   <div id="game-wrapper">
+    <!-- 保證可見的獨立置頂計分板 -->
+    <div id="score-badge">
+      <div>筒筒: <span id="small-count">0</span>/100</div>
+      <div>大事件: <span id="big-count">0</span>/10</div>
+    </div>
+
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
     <!-- UI 控制區 -->
     <div class="controls">
       <div class="btn-group">
-        <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
-        <img src="arrow.png" class="arrow-btn" id="btn-right" alt="向右">
+        <div class="arrow-container">
+          <div class="arrow-label">◄</div>
+          <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-label">►</div>
+          <img src="arrow.png" class="arrow-btn" id="btn-right" alt="向右">
+        </div>
       </div>
       <div class="btn-group">
         <div class="touch-btn" id="btn-jump">▲</div>
@@ -217,8 +279,8 @@
       <p>
         歡迎來到偶像的回顧之旅！<br>
         • 使用左下角箭頭移動<br>
-        • 使用右下角 <b>▲</b> 跳躍收集筒筒<br>
-        • 沿途觸發大事件重溫歷程！
+        • 使用右下角 <b>▲</b> 跳躍收集筒筒與大事件<br>
+        • 觸發 10 個大事件與收集 100 個筒筒完成歷程！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -247,10 +309,10 @@
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
     
-    // 地平線維持剛好高度（65%）
+    // 地平線維持 65% 高度
     const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.65);
 
-    // 音樂播放器與極速解鎖機制
+    // 音樂播放器
     const gameBgm = document.getElementById('game-bgm');
     gameBgm.volume = 0.5;
     let musicStarted = false;
@@ -259,23 +321,20 @@
       if (!musicStarted) {
         gameBgm.play().then(() => {
           musicStarted = true;
-        }).catch(e => console.log("等待首次使用者互動以播放音樂:", e));
+        }).catch(e => console.log("等待互動播放音樂:", e));
       }
     }
 
     window.addEventListener('click', initAudio, { once: true });
     window.addEventListener('touchstart', initAudio, { once: true });
 
-    // 載入圖片與狀態追蹤
+    // 載入圖片
     const images = {};
     function loadImage(key, src) {
       const img = new Image();
       img.src = src;
       img.onload = () => { images[key] = true; };
-      img.onerror = () => { 
-        console.warn(`圖片載入失敗: ${src}`); 
-        images[key] = false;
-      };
+      img.onerror = () => { images[key] = false; };
       return img;
     }
 
@@ -284,21 +343,26 @@
     const imgRunRight = loadImage('runRight', 'runright.png');
     const imgRunLeft = loadImage('runLeft', 'runleft.png');
 
-    // UI 元素
+    // UI DOM
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
     const endScreen = document.getElementById('end-screen');
     const eventTitle = document.getElementById('event-title');
     const eventDesc = document.getElementById('event-desc');
     const finalScore = document.getElementById('final-score');
+    const smallCountEl = document.getElementById('small-count');
+    const bigCountEl = document.getElementById('big-count');
 
-    // 遊戲狀態
+    // 遊戲狀態與關卡寬度
     let gameState = 'START';
-    let score = 0;
+    let smallCollectedCount = 0;
+    let bigCollectedCount = 0;
     let cameraX = 0;
-    const worldWidth = 3200;
+    
+    // 總關卡寬度設為 12800px 讓 100 個 Small 與 10 個 Big 有非常充裕豐富的間距
+    const worldWidth = 12800;
 
-    // 玩家設定：再放大至 110x138
+    // 玩家設定
     const player = {
       x: 100,
       y: 0,
@@ -306,35 +370,109 @@
       height: 138,
       vx: 0,
       vy: 0,
-      speed: 5.5,
-      jumpPower: -13.0,
+      speed: 6.0,
+      jumpPower: -14.0,
       gravity: 0.65,
       isGrounded: false,
       facing: 'right',
       walkTimer: 0
     };
 
-    // Small (筒筒) 基準寬度 50px
+    // 尺寸設定
     const SMALL_BASE_WIDTH = 50;
-    let collectibles = [
-      { x: 350, yOffset: 70, collected: false },
-      { x: 600, yOffset: 120, collected: false },
-      { x: 900, yOffset: 70, collected: false },
-      { x: 1250, yOffset: 130, collected: false },
-      { x: 1600, yOffset: 70, collected: false },
-      { x: 1950, yOffset: 140, collected: false },
-      { x: 2350, yOffset: 70, collected: false },
-      { x: 2750, yOffset: 110, collected: false }
+    const BIG_BASE_WIDTH = 95; // Big 大一點
+
+    // 生成 100 個 Small 和 10 個 Big
+    // 結構：開頭 5 個 Small -> [Big 1] -> 10 個 Small -> [Big 2] -> ... -> [Big 10] -> 結尾 5 個 Small
+    const eventTitles = [
+      '初次出道展演', '首張單曲爆紅', '舉辦首次見面會', '首張專輯發行', '綜藝節目大獲好評',
+      '跨國音樂節嘉賓', '世界巡迴演唱會', '榮獲年度最佳歌手', '達成百萬銷量紀錄', '十週年紀念演唱會'
+    ];
+    const eventDescs = [
+      '站上舞台的那一天，璀璨星光由此展開！',
+      '旋律傳遍街頭巷尾，登上流行榜單第一名！',
+      '與現場粉絲溫馨互動，收穫無數感動與淚水！',
+      '展現多樣音樂風格，獲評論家與歌迷一致盛讚！',
+      '憑藉獨特魅力與幽默感圈粉無數，引爆討論熱潮！',
+      '代表登上國際舞台，向世界展示獨一無二的震撼演出！',
+      '萬人場館座無虛席，共同創造震撼的應援紫海！',
+      '榮耀時刻，站在巔峰繼續攜手前行！',
+      '突破歷史性的銷量裏程碑，成為殿堂級傳奇！',
+      '感謝一路相伴，未來的星光之路依然一同耀眼綻放！'
     ];
 
-    // Big (大事件展區) 基準寬度 70px
-    const BIG_BASE_WIDTH = 70;
-    let eventNodes = [
-      { x: 700, title: '初次出道展演', desc: '站上舞台的那一天，璀璨星光由此展開！', triggered: false },
-      { x: 1400, title: '首張專輯發行', desc: '主打歌曲登上榜首，感謝一路相伴的粉絲們！', triggered: false },
-      { x: 2100, title: '世界巡迴演唱會', desc: '萬人場館座無虛席，共同創造震撼的應援紫海！', triggered: false },
-      { x: 2900, title: '榮獲年度最佳歌手', desc: '榮耀時刻，站在巔峰繼續攜手前行！', triggered: false }
-    ];
+    let collectibles = [];
+    let eventNodes = [];
+
+    function generateLevelData() {
+      collectibles = [];
+      eventNodes = [];
+
+      let currentX = 400;
+      const stepX = 110;
+
+      // 1. 開頭 5 個 small（高低多變）
+      const startHeights = [70, 120, 160, 110, 70];
+      for (let i = 0; i < 5; i++) {
+        collectibles.push({
+          x: currentX,
+          yOffset: startHeights[i % startHeights.length],
+          collected: false
+        });
+        currentX += stepX;
+      }
+
+      // 2. 生成 10 個 Big，每兩個 Big 之間放 10 個 Small
+      for (let b = 0; b < 10; b++) {
+        currentX += 180;
+        
+        // Big 的高度變化（大部分地面，部分低空懸浮）
+        const bigYOffset = (b % 3 === 1) ? 90 : 0; 
+
+        eventNodes.push({
+          x: currentX,
+          yOffset: bigYOffset,
+          title: eventTitles[b],
+          desc: eventDescs[b],
+          triggered: false,
+          collected: false // 觸發後消失
+        });
+
+        currentX += 280;
+
+        // 如果不是最後一個 Big，後方放 10 個 Small
+        if (b < 9) {
+          for (let s = 0; s < 10; s++) {
+            // 生成豐富的高低波動（正弦波 + 梯形跳躍高低）
+            let yOff = 70;
+            const pattern = (s + b) % 5;
+            if (pattern === 1) yOff = 120;
+            if (pattern === 2) yOff = 175;
+            if (pattern === 3) yOff = 130;
+            if (pattern === 4) yOff = 80;
+
+            collectibles.push({
+              x: currentX,
+              yOffset: yOff,
+              collected: false
+            });
+            currentX += stepX;
+          }
+        }
+      }
+
+      // 3. 結尾 5 個 small
+      currentX += 100;
+      const endHeights = [80, 130, 170, 120, 70];
+      for (let i = 0; i < 5; i++) {
+        collectibles.push({
+          x: currentX,
+          yOffset: endHeights[i % endHeights.length],
+          collected: false
+        });
+        currentX += stepX;
+      }
+    }
 
     const keys = { left: false, right: false, jump: false };
 
@@ -398,16 +536,24 @@
       gameState = 'PLAYING';
     });
 
+    function updateScoreDisplay() {
+      smallCountEl.innerText = smallCollectedCount;
+      bigCountEl.innerText = bigCollectedCount;
+    }
+
     function resetGame() {
-      score = 0;
+      smallCollectedCount = 0;
+      bigCollectedCount = 0;
+      updateScoreDisplay();
+
       player.x = 100;
       player.y = GROUND_Y - player.height;
       player.vx = 0;
       player.vy = 0;
       player.walkTimer = 0;
       cameraX = 0;
-      collectibles.forEach(c => c.collected = false);
-      eventNodes.forEach(e => e.triggered = false);
+
+      generateLevelData();
     }
 
     // 邏輯更新
@@ -417,11 +563,11 @@
       if (keys.left) {
         player.vx = -player.speed;
         player.facing = 'left';
-        player.walkTimer += 0.22; // 步伐節奏
+        player.walkTimer += 0.22;
       } else if (keys.right) {
         player.vx = player.speed;
         player.facing = 'right';
-        player.walkTimer += 0.22; // 步伐節奏
+        player.walkTimer += 0.22;
       } else {
         player.vx = 0;
         player.walkTimer = 0;
@@ -441,9 +587,9 @@
       if (player.x < 0) player.x = 0;
 
       // 抵達終點
-      if (player.x + player.width >= worldWidth - 100) {
+      if (player.x + player.width >= worldWidth - 200) {
         gameState = 'END';
-        finalScore.innerText = `恭喜你完成了偶像歷程巡演！最終收集了 ${score} 個筒筒！`;
+        finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終收集了 <b>${smallCollectedCount}</b> 個筒筒 與 <b>${bigCollectedCount}</b> 個大事件！`;
         endScreen.classList.remove('hidden');
       }
 
@@ -461,19 +607,33 @@
               player.y < itemY + SMALL_BASE_WIDTH &&
               player.y + player.height > itemY) {
             c.collected = true;
-            score += 1;
+            smallCollectedCount += 1;
+            updateScoreDisplay();
           }
         }
       });
 
-      // 碰撞檢測：Big (大事件展區)
+      // 碰撞檢測：Big (大事件展區) - 碰到後會跳彈窗且【消失】
       eventNodes.forEach(e => {
-        if (!e.triggered && Math.abs((player.x + player.width/2) - e.x) < 50) {
-          e.triggered = true;
-          gameState = 'PAUSED';
-          eventTitle.innerText = e.title;
-          eventDesc.innerText = e.desc;
-          eventScreen.classList.remove('hidden');
+        if (!e.collected) {
+          const bigH = BIG_BASE_WIDTH * 1.2;
+          const bigY = GROUND_Y - e.yOffset - bigH;
+          
+          if (player.x < e.x + BIG_BASE_WIDTH/2 &&
+              player.x + player.width > e.x - BIG_BASE_WIDTH/2 &&
+              player.y < bigY + bigH &&
+              player.y + player.height > bigY) {
+            
+            e.collected = true; // 設置為已收集（消失）
+            e.triggered = true;
+            bigCollectedCount += 1;
+            updateScoreDisplay();
+
+            gameState = 'PAUSED';
+            eventTitle.innerText = e.title;
+            eventDesc.innerText = e.desc;
+            eventScreen.classList.remove('hidden');
+          }
         }
       });
     }
@@ -493,20 +653,22 @@
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 2. 畫 Big 展區
+      // 2. 畫 Big 展區（未被收集時繪製，大一點 BIG_BASE_WIDTH = 95）
       eventNodes.forEach(e => {
-        if (imgBig.complete && imgBig.naturalWidth > 0) {
-          const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
-          const drawW = BIG_BASE_WIDTH;
-          const drawH = drawW * aspect;
-          ctx.drawImage(imgBig, e.x - drawW/2, GROUND_Y - drawH, drawW, drawH);
-        } else {
-          ctx.fillStyle = e.triggered ? '#555' : '#ffd700';
-          ctx.fillRect(e.x - 20, GROUND_Y - 60, 40, 60);
+        if (!e.collected) {
+          if (imgBig.complete && imgBig.naturalWidth > 0) {
+            const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
+            const drawW = BIG_BASE_WIDTH;
+            const drawH = drawW * aspect;
+            ctx.drawImage(imgBig, e.x - drawW/2, GROUND_Y - e.yOffset - drawH, drawW, drawH);
+          } else {
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(e.x - 30, GROUND_Y - e.yOffset - 90, 60, 90);
+          }
         }
       });
 
-      // 3. 畫 Small 筒筒
+      // 3. 畫 Small 筒筒（未被收集時繪製）
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -518,13 +680,13 @@
           } else {
             ctx.fillStyle = '#ff758c';
             ctx.beginPath();
-            ctx.arc(c.x + 20, itemY + 20, 20, 0, Math.PI * 2);
+            ctx.arc(c.x + 25, itemY + 25, 20, 0, Math.PI * 2);
             ctx.fill();
           }
         }
       });
 
-      // 4. 畫玩家（更大 + 晃動角度更大至約 20 度）
+      // 4. 畫玩家（大尺寸 + 擺動角度約 20 度）
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
       
@@ -532,7 +694,6 @@
       const centerY = player.y + player.height / 2;
       ctx.translate(centerX, centerY);
 
-      // 擺動角度調大：約 ±20 度 (0.35 rad)
       if (player.vx !== 0 && player.isGrounded) {
         const angle = Math.sin(player.walkTimer) * 0.35;
         ctx.rotate(angle);
@@ -546,17 +707,6 @@
       }
       ctx.restore();
 
-      ctx.restore();
-
-      // 5. 得分 UI（修復定位，顯示在左上角最顯眼位置）
-      ctx.save();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.shadowColor = '#000000';
-      ctx.shadowBlur = 6;
-      ctx.fillText(`收集筒筒數: ${score}`, 25, 20);
       ctx.restore();
     }
 
