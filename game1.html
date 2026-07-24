@@ -119,12 +119,13 @@
     /* 控制按鈕容器 */
     .controls {
       position: absolute;
-      bottom: 25px;
+      bottom: 20px;
       left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
-      padding: 0 30px;
+      align-items: flex-end;
+      padding: 0 25px;
       padding-bottom: env(safe-area-inset-bottom);
       pointer-events: none;
       z-index: 5;
@@ -132,14 +133,15 @@
 
     .btn-group {
       display: flex;
-      gap: 20px;
+      gap: 15px;
+      align-items: center;
       pointer-events: auto;
     }
 
-    /* Arrow 按鈕：2.5 倍大小 (125px) */
+    /* Arrow 按鈕：縮小至 75px */
     .arrow-btn {
-      width: 125px;
-      height: 125px;
+      width: 75px;
+      height: 75px;
       object-fit: contain;
       cursor: pointer;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
@@ -157,18 +159,18 @@
       transform: scale(0.9);
     }
 
-    /* 跳躍按鈕：2.5 倍大小 (125px) */
+    /* 跳躍按鈕：大幅縮小至 55px */
     .touch-btn {
-      width: 125px;
-      height: 125px;
+      width: 55px;
+      height: 55px;
       background: rgba(255, 255, 255, 0.25);
-      border: 4px solid rgba(255, 255, 255, 0.85);
+      border: 3px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 3rem;
+      font-size: 1.5rem;
       font-weight: bold;
       backdrop-filter: blur(4px);
       pointer-events: auto;
@@ -245,8 +247,8 @@
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
     
-    // 高地平線設定（位於畫布高度 45% 處）
-    const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.45);
+    // 地平線向下調整：位於畫布高度的 65% 處
+    const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.65);
 
     // 音樂播放器與極速解鎖機制
     const gameBgm = document.getElementById('game-bgm');
@@ -272,7 +274,7 @@
       img.src = src;
       img.onload = () => { images[key] = true; };
       img.onerror = () => { 
-        console.warn(`圖片載入失敗: ${src}，請檢查檔案名稱與路徑！`); 
+        console.warn(`圖片載入失敗: ${src}`); 
         images[key] = false;
       };
       return img;
@@ -297,36 +299,37 @@
     let cameraX = 0;
     const worldWidth = 3200;
 
-    // 玩家設定
+    // 玩家設定：顯著放大至 80x100
     const player = {
       x: 100,
       y: 0,
-      width: 50,
-      height: 62,
+      width: 80,
+      height: 100,
       vx: 0,
       vy: 0,
       speed: 5.5,
       jumpPower: -13.0,
       gravity: 0.65,
       isGrounded: false,
-      facing: 'right'
+      facing: 'right',
+      walkTimer: 0 // 用於計算走動搖晃角度
     };
 
-    // 2.5 倍大：Small 基準寬度 100px
-    const SMALL_BASE_WIDTH = 100;
+    // Small (筒筒) 縮小：基準寬度 50px
+    const SMALL_BASE_WIDTH = 50;
     let collectibles = [
-      { x: 350, yOffset: 80, collected: false },
-      { x: 600, yOffset: 130, collected: false },
-      { x: 900, yOffset: 80, collected: false },
-      { x: 1250, yOffset: 140, collected: false },
-      { x: 1600, yOffset: 80, collected: false },
-      { x: 1950, yOffset: 150, collected: false },
-      { x: 2350, yOffset: 80, collected: false },
-      { x: 2750, yOffset: 120, collected: false }
+      { x: 350, yOffset: 70, collected: false },
+      { x: 600, yOffset: 120, collected: false },
+      { x: 900, yOffset: 70, collected: false },
+      { x: 1250, yOffset: 130, collected: false },
+      { x: 1600, yOffset: 70, collected: false },
+      { x: 1950, yOffset: 140, collected: false },
+      { x: 2350, yOffset: 70, collected: false },
+      { x: 2750, yOffset: 110, collected: false }
     ];
 
-    // 2.5 倍大：Big 基準寬度 150px
-    const BIG_BASE_WIDTH = 150;
+    // Big (大事件展區) 大幅縮小：基準寬度 70px
+    const BIG_BASE_WIDTH = 70;
     let eventNodes = [
       { x: 700, title: '初次出道展演', desc: '站上舞台的那一天，璀璨星光由此展開！', triggered: false },
       { x: 1400, title: '首張專輯發行', desc: '主打歌曲登上榜首，感謝一路相伴的粉絲們！', triggered: false },
@@ -402,6 +405,7 @@
       player.y = GROUND_Y - player.height;
       player.vx = 0;
       player.vy = 0;
+      player.walkTimer = 0;
       cameraX = 0;
       collectibles.forEach(c => c.collected = false);
       eventNodes.forEach(e => e.triggered = false);
@@ -414,11 +418,14 @@
       if (keys.left) {
         player.vx = -player.speed;
         player.facing = 'left';
+        player.walkTimer += 0.18; // 推進晃動計時
       } else if (keys.right) {
         player.vx = player.speed;
         player.facing = 'right';
+        player.walkTimer += 0.18; // 推進晃動計時
       } else {
         player.vx = 0;
+        player.walkTimer = 0; // 靜止時重置
       }
 
       player.vy += player.gravity;
@@ -479,7 +486,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 畫高地平線
+      // 1. 畫下移後的地平線
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -487,7 +494,7 @@
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 2. 畫 Big 玩偶（保持原始比例）
+      // 2. 畫 Big 玩偶（小很多：寬度 70px，貼齊地平線）
       eventNodes.forEach(e => {
         if (imgBig.complete && imgBig.naturalWidth > 0) {
           const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
@@ -495,13 +502,12 @@
           const drawH = drawW * aspect;
           ctx.drawImage(imgBig, e.x - drawW/2, GROUND_Y - drawH, drawW, drawH);
         } else {
-          // 圖片還在讀取時的後備繪製
           ctx.fillStyle = e.triggered ? '#555' : '#ffd700';
-          ctx.fillRect(e.x - 40, GROUND_Y - 120, 80, 120);
+          ctx.fillRect(e.x - 20, GROUND_Y - 60, 40, 60);
         }
       });
 
-      // 3. 畫 Small 筒筒（保持原始比例）
+      // 3. 畫 Small 筒筒（小一點：寬度 50px）
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -511,23 +517,36 @@
             const drawH = drawW * aspect;
             ctx.drawImage(imgSmall, c.x, itemY, drawW, drawH);
           } else {
-            // 圖片還在讀取時的後備繪製
             ctx.fillStyle = '#ff758c';
             ctx.beginPath();
-            ctx.arc(c.x + 30, itemY + 30, 30, 0, Math.PI * 2);
+            ctx.arc(c.x + 20, itemY + 20, 20, 0, Math.PI * 2);
             ctx.fill();
           }
         }
       });
 
-      // 4. 畫玩家
+      // 4. 畫玩家（大很多 + 移動左右晃動效果）
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
+      ctx.save();
+      
+      // 移動到玩家中心以做旋轉與繪製
+      const centerX = player.x + player.width / 2;
+      const centerY = player.y + player.height / 2;
+      ctx.translate(centerX, centerY);
+
+      // 如果正在左右移動且在地面上，計算左右搖晃角度（正弦波晃動約 -10° ~ +10°）
+      if (player.vx !== 0 && player.isGrounded) {
+        const angle = Math.sin(player.walkTimer) * 0.18; // 弧度約 10 度
+        ctx.rotate(angle);
+      }
+
       if (curImg.complete && curImg.naturalWidth > 0) {
-        ctx.drawImage(curImg, player.x, player.y, player.width, player.height);
+        ctx.drawImage(curImg, -player.width / 2, -player.height / 2, player.width, player.height);
       } else {
         ctx.fillStyle = '#00f0ff';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
       }
+      ctx.restore();
 
       ctx.restore();
 
