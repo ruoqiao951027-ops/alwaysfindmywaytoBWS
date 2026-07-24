@@ -43,22 +43,22 @@
       height: 100%;
     }
 
-    /* 置頂計分 UI Badge（保證百分百看得到，不被 Canvas 裁切或遮擋） */
+    /* 計分 UI：向下移動至 top: 55px，確保完全看得見 */
     #score-badge {
       position: absolute;
-      top: 15px;
+      top: 55px;
       left: 20px;
       z-index: 20;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(0, 0, 0, 0.75);
       border: 2px solid #ff2a74;
       border-radius: 20px;
-      padding: 6px 16px;
+      padding: 8px 18px;
       color: #ffffff;
       font-size: 1.1rem;
       font-weight: bold;
       letter-spacing: 0.5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
       pointer-events: none;
       display: flex;
       gap: 15px;
@@ -142,16 +142,16 @@
       transform: scale(0.95);
     }
 
-    /* 控制按鈕容器：下去一點 (bottom: 25px) */
+    /* 控制按鈕容器 */
     .controls {
       position: absolute;
-      bottom: 25px;
+      bottom: 20px;
       left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      padding: 0 30px;
+      padding: 0 25px;
       padding-bottom: env(safe-area-inset-bottom);
       pointer-events: none;
       z-index: 10;
@@ -164,36 +164,38 @@
       pointer-events: auto;
     }
 
-    /* Arrow 控制區外框與高透明度，上方加上箭頭符號圖案 */
+    /* Arrow 容器：箭頭壓在圖案內部上緣/中央 */
     .arrow-container {
       position: relative;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
     }
 
     .arrow-label {
-      font-size: 1.4rem;
+      position: absolute;
+      top: 18px;
+      font-size: 1.3rem;
       color: #ffffff;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
-      margin-bottom: 2px;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9);
       font-weight: bold;
       pointer-events: none;
+      z-index: 2;
     }
 
-    /* Arrow 按鈕：高透明度 (1.0 鮮明度 / 提高對比與透明不遮擋) */
+    /* Arrow 按鈕：再加大至 110px，透明度調高 (0.6) */
     .arrow-btn {
-      width: 85px;
-      height: 85px;
+      width: 110px;
+      height: 110px;
       object-fit: contain;
       cursor: pointer;
-      opacity: 0.95;
+      opacity: 0.6;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85));
-      transition: opacity 0.2s, transform 0.1s;
+      transition: opacity 0.2s;
     }
 
-    .arrow-btn:hover {
-      opacity: 1;
+    .arrow-btn:active {
+      opacity: 0.9;
     }
 
     #btn-left {
@@ -201,19 +203,19 @@
     }
 
     #btn-left:active {
-      transform: scaleX(-1) scale(0.9);
+      transform: scaleX(-1) scale(0.92);
     }
 
     #btn-right:active, #btn-jump:active {
-      transform: scale(0.9);
+      transform: scale(0.92);
     }
 
-    /* 跳躍按鈕：下去一點 (對齊底部) */
+    /* 跳躍按鈕：適度下移對齊 */
     .touch-btn {
-      width: 60px;
-      height: 60px;
-      background: rgba(255, 255, 255, 0.35);
-      border: 3px solid rgba(255, 255, 255, 0.95);
+      width: 65px;
+      height: 65px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 3px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
       display: flex;
       justify-content: center;
@@ -224,7 +226,11 @@
       backdrop-filter: blur(4px);
       pointer-events: auto;
       box-shadow: 0 4px 10px rgba(0,0,0,0.85);
-      opacity: 0.95;
+      opacity: 0.6;
+    }
+
+    .touch-btn:active {
+      opacity: 0.9;
     }
 
     #event-modal {
@@ -248,7 +254,7 @@
   <audio id="game-bgm" src="game.mp3" loop preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 保證可見的獨立置頂計分板 -->
+    <!-- 下移至頂部 55px 的計分板 -->
     <div id="score-badge">
       <div>筒筒: <span id="small-count">0</span>/100</div>
       <div>大事件: <span id="big-count">0</span>/10</div>
@@ -278,9 +284,9 @@
       <h1>偶像星光歷程展</h1>
       <p>
         歡迎來到偶像的回顧之旅！<br>
-        • 使用左下角箭頭移動<br>
-        • 使用右下角 <b>▲</b> 跳躍收集筒筒與大事件<br>
-        • 觸發 10 個大事件與收集 100 個筒筒完成歷程！
+        • 使用左下角箭頭移動與爬樓梯<br>
+        • 使用右下角 <b>▲</b> 跳躍收集高處的筒筒與大事件<br>
+        • 踩上樓梯、衝下斜坡，集齊 10 個大事件與 100 個筒筒！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -353,16 +359,14 @@
     const smallCountEl = document.getElementById('small-count');
     const bigCountEl = document.getElementById('big-count');
 
-    // 遊戲狀態與關卡寬度
+    // 遊戲狀態與動態長度
     let gameState = 'START';
     let smallCollectedCount = 0;
     let bigCollectedCount = 0;
     let cameraX = 0;
-    
-    // 總關卡寬度設為 12800px 讓 100 個 Small 與 10 個 Big 有非常充裕豐富的間距
-    const worldWidth = 12800;
+    let worldWidth = 16000; // 初始化預設值，生成地圖時動態延長
 
-    // 玩家設定
+    // 玩家設定：跳躍高度微調低 (jumpPower: -11.5)
     const player = {
       x: 100,
       y: 0,
@@ -371,8 +375,8 @@
       vx: 0,
       vy: 0,
       speed: 6.0,
-      jumpPower: -14.0,
-      gravity: 0.65,
+      jumpPower: -11.5,
+      gravity: 0.62,
       isGrounded: false,
       facing: 'right',
       walkTimer: 0
@@ -380,10 +384,8 @@
 
     // 尺寸設定
     const SMALL_BASE_WIDTH = 50;
-    const BIG_BASE_WIDTH = 95; // Big 大一點
+    const BIG_BASE_WIDTH = 95;
 
-    // 生成 100 個 Small 和 10 個 Big
-    // 結構：開頭 5 個 Small -> [Big 1] -> 10 個 Small -> [Big 2] -> ... -> [Big 10] -> 結尾 5 個 Small
     const eventTitles = [
       '初次出道展演', '首張單曲爆紅', '舉辦首次見面會', '首張專輯發行', '綜藝節目大獲好評',
       '跨國音樂節嘉賓', '世界巡迴演唱會', '榮獲年度最佳歌手', '達成百萬銷量紀錄', '十週年紀念演唱會'
@@ -397,59 +399,108 @@
       '代表登上國際舞台，向世界展示獨一無二的震撼演出！',
       '萬人場館座無虛席，共同創造震撼的應援紫海！',
       '榮耀時刻，站在巔峰繼續攜手前行！',
-      '突破歷史性的銷量裏程碑，成為殿堂級傳奇！',
+      '突破歷史性的銷量里程碑，成為殿堂級傳奇！',
       '感謝一路相伴，未來的星光之路依然一同耀眼綻放！'
     ];
 
     let collectibles = [];
     let eventNodes = [];
+    let platforms = []; // 樓梯/高台實體平台
 
     function generateLevelData() {
       collectibles = [];
       eventNodes = [];
+      platforms = [];
 
       let currentX = 400;
-      const stepX = 110;
+      const stepX = 130;
 
-      // 1. 開頭 5 個 small（高低多變）
-      const startHeights = [70, 120, 160, 110, 70];
+      // 1. 開頭 5 個 small（低、中、高跳躍才能吃到）
+      const startHeights = [20, 110, 190, 120, 30];
       for (let i = 0; i < 5; i++) {
         collectibles.push({
           x: currentX,
-          yOffset: startHeights[i % startHeights.length],
+          yOffset: startHeights[i],
           collected: false
         });
         currentX += stepX;
       }
 
-      // 2. 生成 10 個 Big，每兩個 Big 之間放 10 個 Small
+      // 2. 生成 10 個區域（包含樓梯、高台與滑梯地形）
       for (let b = 0; b < 10; b++) {
-        currentX += 180;
-        
-        // Big 的高度變化（大部分地面，部分低空懸浮）
-        const bigYOffset = (b % 3 === 1) ? 90 : 0; 
+        currentX += 150;
 
-        eventNodes.push({
-          x: currentX,
-          yOffset: bigYOffset,
-          title: eventTitles[b],
-          desc: eventDescs[b],
-          triggered: false,
-          collected: false // 觸發後消失
-        });
+        // 每隔幾區生成階梯樓梯或高台滑梯
+        const layoutType = b % 3; // 0: 上樓梯高台, 1: 梯形金字塔樓梯, 2: 懸空高跳階梯
 
-        currentX += 280;
+        let bigYOffset = 0;
 
-        // 如果不是最後一個 Big，後方放 10 個 Small
+        if (layoutType === 0) {
+          // 上樓梯高台：3 階梯上樓
+          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 120, h: 40 });
+          platforms.push({ x: currentX + 100, y: GROUND_Y - 80, w: 120, h: 80 });
+          platforms.push({ x: currentX + 200, y: GROUND_Y - 120, w: 300, h: 120 }); // 頂樓大高台
+
+          bigYOffset = 120; // Big 放在樓梯頂端高台
+          eventNodes.push({
+            x: currentX + 320,
+            yOffset: bigYOffset,
+            title: eventTitles[b],
+            desc: eventDescs[b],
+            triggered: false,
+            collected: false
+          });
+
+          // 滑梯下坡高台
+          platforms.push({ x: currentX + 500, y: GROUND_Y - 60, w: 120, h: 60 });
+          currentX += 650;
+
+        } else if (layoutType === 1) {
+          // 梯形金字塔樓梯
+          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 100, h: 50 });
+          platforms.push({ x: currentX + 80, y: GROUND_Y - 100, w: 220, h: 100 });
+          platforms.push({ x: currentX + 280, y: GROUND_Y - 50, w: 100, h: 50 });
+
+          bigYOffset = 100; // Big 在金字塔頂端
+          eventNodes.push({
+            x: currentX + 190,
+            yOffset: bigYOffset,
+            title: eventTitles[b],
+            desc: eventDescs[b],
+            triggered: false,
+            collected: false
+          });
+
+          currentX += 420;
+
+        } else {
+          // 平地 Big，後方搭配高空懸空跳躍樓梯
+          bigYOffset = 0;
+          eventNodes.push({
+            x: currentX + 80,
+            yOffset: bigYOffset,
+            title: eventTitles[b],
+            desc: eventDescs[b],
+            triggered: false,
+            collected: false
+          });
+
+          // 懸空階梯
+          platforms.push({ x: currentX + 220, y: GROUND_Y - 70, w: 110, h: 20 });
+          platforms.push({ x: currentX + 360, y: GROUND_Y - 130, w: 110, h: 20 });
+          currentX += 520;
+        }
+
+        // 如果不是最後一個 Big，中間放 10 個 Small（擺放在樓梯上或超高空中需跳躍）
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
-            // 生成豐富的高低波動（正弦波 + 梯形跳躍高低）
-            let yOff = 70;
-            const pattern = (s + b) % 5;
-            if (pattern === 1) yOff = 120;
-            if (pattern === 2) yOff = 175;
-            if (pattern === 3) yOff = 130;
-            if (pattern === 4) yOff = 80;
+            // 高度多變：高達 180px ~ 230px（必須精準跳躍或登上高台才能吃到）
+            let yOff = 20;
+            const hPattern = (s + b) % 5;
+            if (hPattern === 1) yOff = 120;
+            if (hPattern === 2) yOff = 210; 
+            if (hPattern === 3) yOff = 160;
+            if (hPattern === 4) yOff = 60;
 
             collectibles.push({
               x: currentX,
@@ -463,15 +514,18 @@
 
       // 3. 結尾 5 個 small
       currentX += 100;
-      const endHeights = [80, 130, 170, 120, 70];
+      const endHeights = [30, 130, 200, 140, 30];
       for (let i = 0; i < 5; i++) {
         collectibles.push({
           x: currentX,
-          yOffset: endHeights[i % endHeights.length],
+          yOffset: endHeights[i],
           collected: false
         });
         currentX += stepX;
       }
+
+      // 動態更新地圖總長度，確保絕對不提前結束
+      worldWidth = currentX + 800;
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -546,14 +600,14 @@
       bigCollectedCount = 0;
       updateScoreDisplay();
 
+      generateLevelData();
+
       player.x = 100;
       player.y = GROUND_Y - player.height;
       player.vx = 0;
       player.vy = 0;
       player.walkTimer = 0;
       cameraX = 0;
-
-      generateLevelData();
     }
 
     // 邏輯更新
@@ -577,17 +631,34 @@
       player.x += player.vx;
       player.y += player.vy;
 
-      // 貼齊地平線
-      if (player.y + player.height >= GROUND_Y) {
-        player.y = GROUND_Y - player.height;
+      // 預設地面高度
+      let currentGround = GROUND_Y;
+      player.isGrounded = false;
+
+      // 檢查是否站在樓梯/高台平台上 (從上方落下踩住)
+      platforms.forEach(plat => {
+        const platTop = plat.y;
+        if (player.x + player.width * 0.7 > plat.x &&
+            player.x + player.width * 0.3 < plat.x + plat.w) {
+          if (player.y + player.height >= platTop - 12 &&
+              player.y + player.height <= platTop + 20 &&
+              player.vy >= 0) {
+            currentGround = Math.min(currentGround, platTop);
+          }
+        }
+      });
+
+      // 貼齊地平線或高台頂部
+      if (player.y + player.height >= currentGround) {
+        player.y = currentGround - player.height;
         player.vy = 0;
         player.isGrounded = true;
       }
 
       if (player.x < 0) player.x = 0;
 
-      // 抵達終點
-      if (player.x + player.width >= worldWidth - 200) {
+      // 真正的終點通關判定（走到地圖最後區域）
+      if (player.x + player.width >= worldWidth - 400) {
         gameState = 'END';
         finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終收集了 <b>${smallCollectedCount}</b> 個筒筒 與 <b>${bigCollectedCount}</b> 個大事件！`;
         endScreen.classList.remove('hidden');
@@ -613,7 +684,7 @@
         }
       });
 
-      // 碰撞檢測：Big (大事件展區) - 碰到後會跳彈窗且【消失】
+      // 碰撞檢測：Big (大事件展區) - 碰到後跳彈窗且消失
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -624,7 +695,7 @@
               player.y < bigY + bigH &&
               player.y + player.height > bigY) {
             
-            e.collected = true; // 設置為已收集（消失）
+            e.collected = true;
             e.triggered = true;
             bigCollectedCount += 1;
             updateScoreDisplay();
@@ -645,7 +716,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 畫地平線
+      // 1. 畫主地平線
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -653,7 +724,24 @@
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 2. 畫 Big 展區（未被收集時繪製，大一點 BIG_BASE_WIDTH = 95）
+      // 2. 畫樓梯高台 (Platforms)
+      platforms.forEach(p => {
+        ctx.fillStyle = 'rgba(255, 42, 116, 0.25)';
+        ctx.strokeStyle = '#ff758c';
+        ctx.lineWidth = 2;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+
+        // 頂部亮邊線條
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.w, p.y);
+        ctx.stroke();
+      });
+
+      // 3. 畫 Big 展區
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -668,7 +756,7 @@
         }
       });
 
-      // 3. 畫 Small 筒筒（未被收集時繪製）
+      // 4. 畫 Small 筒筒
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -686,7 +774,7 @@
         }
       });
 
-      // 4. 畫玩家（大尺寸 + 擺動角度約 20 度）
+      // 5. 畫玩家
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
       
