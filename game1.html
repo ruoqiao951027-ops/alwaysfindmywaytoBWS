@@ -42,23 +42,21 @@
       height: 100%;
     }
 
-    /* 1. 修正：計分板只要文字，不要外框、背景與陰影 */
+    /* 計分板：純文字無外框 */
     #score-badge {
       position: absolute;
       top: calc(75px + env(safe-area-inset-top));
       left: 20px;
       z-index: 60;
-      color: #3D2E24; /* 深咖啡色字體 */
+      color: #3D2E24;
       font-size: 1.05rem;
       font-weight: bold;
       letter-spacing: 0.5px;
-      /* 增加文字白底陰影，確保在淺色地形上依然清晰 */
       text-shadow: 0 1px 2px rgba(255,255,255,0.8);
       pointer-events: none;
       display: flex;
       align-items: center;
       line-height: 1.2;
-      /* 移除背景、邊框、圓角、陰影 */
       background: none;
       border: none;
       padding: 0;
@@ -259,6 +257,7 @@
 
     .touch-btn:active { opacity: 0.95; }
 
+    /* 大事件彈窗：窄面板 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -316,7 +315,6 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 計分板 -->
     <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -478,8 +476,7 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    // 2. 修正：Cake 小一點點 (從 195 縮小為 165)
-    const CAKE_BASE_WIDTH = 165; 
+    const CAKE_BASE_WIDTH = 165;
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -498,6 +495,7 @@
     let eventNodes = [];
     let platforms = [];
     let curvedTerrains = [];
+    let slopes = [];
     let cakeObject = null;
 
     function getGroundYAt(x) {
@@ -509,6 +507,16 @@
           const curveVal = Math.sin(norm * Math.PI) * ct.height;
           if (ct.type === 'concave') ground = GROUND_Y + curveVal;
           else if (ct.type === 'convex') ground = GROUND_Y - curveVal;
+        }
+      });
+
+      slopes.forEach(s => {
+        if (x >= s.x1 && x <= s.x2) {
+          const progress = (x - s.x1) / (s.x2 - s.x1);
+          const slopeY = s.y1 + progress * (s.y2 - s.y1);
+          if (slopeY < ground) {
+            ground = slopeY;
+          }
         }
       });
 
@@ -534,12 +542,11 @@
       eventNodes = [];
       platforms = [];
       curvedTerrains = [];
+      slopes = [];
 
       let currentX = 350;
 
-      // 預定 10 個大事件位置
       for (let b = 0; b < 10; b++) {
-        // 3. 修正：Big 大事件前的空白道路小一點，將 currentX + 800 縮減為 + 350
         let bigX = currentX + 350 + b * 2200; 
         let bigYOffset = 100;
         if (b === 1) bigYOffset = 115;
@@ -561,41 +568,53 @@
 
       for (let b = 0; b < 10; b++) {
         const currentEvent = eventNodes[b];
-        const layoutType = b % 5;
+        const layoutType = b % 7; // 豐富地形組合 (0~6)
 
         if (layoutType === 0) {
-          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 70, h: 40 });
-          platforms.push({ x: currentX + 60, y: GROUND_Y - 80, w: 70, h: 80 });
-          platforms.push({ x: currentX + 120, y: GROUND_Y - 120, w: 90, h: 120 });
-          platforms.push({ x: currentX + 200, y: GROUND_Y - 80, w: 70, h: 80 });
-          platforms.push({ x: currentX + 260, y: GROUND_Y - 40, w: 70, h: 40 });
-          currentX += 450;
+          // 1. 上升階梯 (Stairs Up)
+          platforms.push({ x: currentX, y: GROUND_Y - 35, w: 70, h: 35 });
+          platforms.push({ x: currentX + 60, y: GROUND_Y - 70, w: 70, h: 70 });
+          platforms.push({ x: currentX + 120, y: GROUND_Y - 105, w: 80, h: 105 });
+          platforms.push({ x: currentX + 190, y: GROUND_Y - 140, w: 90, h: 140 });
+          currentX += 320;
         } else if (layoutType === 1) {
-          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
-          platforms.push({ x: currentX + 80, y: GROUND_Y - 110, w: 70, h: 20 });
-          platforms.push({ x: currentX + 170, y: GROUND_Y - 160, w: 100, h: 20 });
-          platforms.push({ x: currentX + 290, y: GROUND_Y - 100, w: 70, h: 100 });
-          currentX += 480;
+          // 2. 下降階梯 (Stairs Down)
+          platforms.push({ x: currentX, y: GROUND_Y - 120, w: 80, h: 120 });
+          platforms.push({ x: currentX + 70, y: GROUND_Y - 85, w: 70, h: 85 });
+          platforms.push({ x: currentX + 130, y: GROUND_Y - 50, w: 70, h: 50 });
+          platforms.push({ x: currentX + 190, y: GROUND_Y - 25, w: 60, h: 25 });
+          currentX += 280;
         } else if (layoutType === 2) {
-          curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'concave' });
-          platforms.push({ x: currentX + 250, y: GROUND_Y - 50, w: 60, h: 50 });
-          platforms.push({ x: currentX + 300, y: GROUND_Y - 90, w: 60, h: 90 });
-          platforms.push({ x: currentX + 350, y: GROUND_Y - 130, w: 110, h: 130 });
-          currentX += 580;
+          // 3. 下降滑坡 (Slide Slope)
+          slopes.push({ x1: currentX, y1: GROUND_Y - 120, x2: currentX + 240, y2: GROUND_Y });
+          platforms.push({ x: currentX, y: GROUND_Y - 120, w: 60, h: 120 });
+          currentX += 280;
         } else if (layoutType === 3) {
-          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
-          platforms.push({ x: currentX + 50, y: GROUND_Y - 100, w: 60, h: 100 });
-          platforms.push({ x: currentX + 130, y: GROUND_Y - 60, w: 60, h: 60 });
-          platforms.push({ x: currentX + 180, y: GROUND_Y - 120, w: 100, h: 120 });
-          currentX += 420;
+          // 4. 跳躍平台 (Floating Platforms)
+          platforms.push({ x: currentX, y: GROUND_Y - 45, w: 60, h: 45 });
+          platforms.push({ x: currentX + 90, y: GROUND_Y - 100, w: 65, h: 20 });
+          platforms.push({ x: currentX + 185, y: GROUND_Y - 150, w: 65, h: 20 });
+          platforms.push({ x: currentX + 280, y: GROUND_Y - 90, w: 60, h: 90 });
+          currentX += 370;
+        } else if (layoutType === 4) {
+          // 5. 山谷地形 (Valley)
+          platforms.push({ x: currentX, y: GROUND_Y - 80, w: 70, h: 80 });
+          curvedTerrains.push({ x: currentX + 60, w: 220, height: 60, type: 'concave' });
+          platforms.push({ x: currentX + 270, y: GROUND_Y - 80, w: 80, h: 80 });
+          currentX += 380;
+        } else if (layoutType === 5) {
+          // 6. 凹字型弧 (Concave Arc)
+          curvedTerrains.push({ x: currentX, w: 280, height: 55, type: 'concave' });
+          platforms.push({ x: currentX + 260, y: GROUND_Y - 60, w: 70, h: 60 });
+          currentX += 360;
         } else {
-          curvedTerrains.push({ x: currentX, w: 240, height: 45, type: 'convex' });
-          platforms.push({ x: currentX + 230, y: GROUND_Y - 60, w: 60, h: 60 });
-          platforms.push({ x: currentX + 300, y: GROUND_Y - 110, w: 60, h: 110 });
-          platforms.push({ x: currentX + 370, y: GROUND_Y - 150, w: 110, h: 150 });
-          currentX += 560;
+          // 7. 凸字型弧 (Convex Arc)
+          curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'convex' });
+          platforms.push({ x: currentX + 240, y: GROUND_Y - 80, w: 70, h: 80 });
+          currentX += 350;
         }
 
+        // 大事件高台
         platforms.push({
           x: currentEvent.x - 65,
           y: GROUND_Y - currentEvent.yOffset,
@@ -789,6 +808,14 @@
         }
       });
 
+      slopes.forEach(s => {
+        if (playerCenterX >= s.x1 && playerCenterX <= s.x2) {
+          const progress = (playerCenterX - s.x1) / (s.x2 - s.x1);
+          const slopeY = s.y1 + progress * (s.y2 - s.y1);
+          currentGround = Math.min(currentGround, slopeY);
+        }
+      });
+
       platforms.forEach(p => {
         if (player.x + player.width * 0.75 > p.x && player.x + player.width * 0.25 < p.x + p.w) {
           if (player.y + player.height >= p.y - 14 && player.y + player.height <= p.y + 25 && player.vy >= 0) {
@@ -890,14 +917,16 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
+      // 繪製地面與地形線條
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
       ctx.beginPath();
 
-      let stepX = 15;
+      let stepX = 10;
       ctx.moveTo(0, GROUND_Y);
       for (let px = 0; px <= worldWidth; px += stepX) {
         let py = GROUND_Y;
+
         for (let ct of curvedTerrains) {
           if (px >= ct.x && px <= ct.x + ct.w) {
             const norm = (px - ct.x) / ct.w;
@@ -906,10 +935,39 @@
             break;
           }
         }
+
+        for (let s of slopes) {
+          if (px >= s.x1 && px <= s.x2) {
+            const progress = (px - s.x1) / (s.x2 - s.x1);
+            py = s.y1 + progress * (s.y2 - s.y1);
+            break;
+          }
+        }
+
         ctx.lineTo(px, py);
       }
       ctx.stroke();
 
+      // 繪製斜坡充填
+      slopes.forEach(s => {
+        ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
+        ctx.beginPath();
+        ctx.moveTo(s.x1, s.y1);
+        ctx.lineTo(s.x2, s.y2);
+        ctx.lineTo(s.x2, GROUND_Y + 50);
+        ctx.lineTo(s.x1, GROUND_Y + 50);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#8C6D58';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s.x1, s.y1);
+        ctx.lineTo(s.x2, s.y2);
+        ctx.stroke();
+      });
+
+      // 繪製平台與階梯
       platforms.forEach(p => {
         ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -926,6 +984,7 @@
         ctx.stroke();
       });
 
+      // 繪製 Big 收集品
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -940,6 +999,7 @@
         }
       });
 
+      // 繪製 Cake 終點
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
           const aspect = imgCake.naturalHeight / imgCake.naturalWidth;
@@ -952,6 +1012,7 @@
         }
       }
 
+      // 繪製 Small 收集品
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth > 0) {
@@ -968,6 +1029,7 @@
         }
       });
 
+      // 繪製角色
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
 
