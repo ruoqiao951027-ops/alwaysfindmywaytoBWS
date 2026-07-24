@@ -124,7 +124,7 @@
       display: flex;
       justify-content: space-between;
       padding: 0 30px;
-      padding-bottom: env(safe-area-inset-bottom); /* 手機安全區域 */
+      padding-bottom: env(safe-area-inset-bottom);
       pointer-events: none;
       z-index: 5;
     }
@@ -212,252 +212,6 @@
 
     <!-- 開始畫面 -->
     <div id="start-screen" class="screen-overlay">
-      <h1>偶像星光歷程展從你提供的截圖 `S__131801098_0.jpg` 看來，核心問題是 **Canvas 內部的物件比例計算錯誤**，導致：
-
-1.  標準尺寸下物件太小（看不到玩偶細節）。
-2.  遊戲內部地平線太低。
-3.  最關鍵的是：虛擬按鈕（Arrow 和 跳躍▲）是基於 Body 定位，而遊戲畫布被壓在下方，導致按鈕下沉與粉紅紅線重疊且被切掉。
-
----
-
-### 💡 遊戲重構解決方案（貼上即可解決所有問題）：
-
-#### 1. 徹底解決畫布壓扁與物件變形 (Scaling & Aspect Fix)
-我們需要為 Canvas 設定一個固定的邏輯解析度 (Standard 16:9 比例，例如 **800×450**)，並透過 CSS 進行自適應等比例縮放（Fit）。這樣不論手機螢幕是 19:9 還是 21:9，裡面的玩偶與文字都**絕對不會被壓扁**，且會變大變清晰！
-
-#### 2. 精確锚定控制按鈕位置 (UI Position Fix)
-將 `.controls` 的 CSS `bottom` 從 `15px` **抬高到 `30px`**。這會強制將箭頭圖片與跳躍 ▲ 按鈕向上移，完整呈現在紅線地平線與手機底部遮擋模式中間的黑藍色背景區，**保證不會被切掉**！
-
-#### 3. 放大 `small.png` 與 `big.png` 並校正地平線 (Objects & Ground Fix)
-在 16:9 的標準比例下：
-*   **Small**（紅色圓球怪物）顯示尺寸從直徑 24px 放大至 **42px**。
-*   **Big**（白色偶像玩偶）顯示尺寸從寬度 48px 放大至 **55px**。
-*   修正地平線邏輯 Y 軸為 `GROUND_Y = 380`，確保所有物件腳底貼齊地平線，不再下沉。
-
-#### 4. 遊戲背景音樂與分數 UI (BGM & Score)
-*   BGM 已設定使用 `game.mp3`。
-*   收集文字修改為：收集筒筒數（固定左上角，放大字體並加上黑邊陰影確保清晰）。
-
----
-
-### 完整修正版 HTML / JavaScript 程式碼：
-
-```html
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>偶像歷程回顧之旅</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation; /* 防止手機快速點擊縮放 */
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #0d0d1a;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* 遊戲畫布容器：固定標準 16:9 比例，在不同手機螢幕上自適應縮放不變形 */
-    #game-wrapper {
-      position: relative;
-      width: 100vw;
-      height: 56.25vw; /* 16:9 比例 */
-      max-height: 100vh;
-      max-width: 177.78vh; /* 16:9 比例 */
-      background: #1a1a2e;
-      overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8);
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* 直向螢幕提示 (優化橫向體驗) */
-    @media (orientation: portrait) {
-      #game-wrapper::after {
-        content: "📱 請將手機旋轉至橫向以獲得最佳體驗";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        color: #fff;
-        display: flex;
-        justify(center, align) items: center;
-        font-size: 1.2rem;
-        z-index: 100;
-        text-align: center;
-        padding: 20px;
-      }
-    }
-
-    /* UI Overlay 畫面 */
-    .screen-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      z-index: 10;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    h1 {
-      font-size: 1.6rem;
-      color: #ff2a74;
-      margin-bottom: 8px;
-    }
-
-    p {
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 15px;
-      max-width: 480px;
-    }
-
-    .btn {
-      padding: 10px 25px;
-      font-size: 1rem;
-      font-weight: bold;
-      color: #fff;
-      background: linear-gradient(45deg, #ff2a74, #ff758c);
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 42, 116, 0.4);
-    }
-
-    .btn:active {
-      transform: scale(0.95);
-    }
-
-    /* 手機控制按鈕：上抬 30px，完整呈現在黑藍色背景，位於紅線地平線下方 */
-    .controls {
-      position: absolute;
-      bottom: 30px; /* 向上抬高，確保下半部完整 */
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 30px;
-      padding-bottom: env(safe-area-inset-bottom); /* 避開手機底部安全區域 */
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 15px;
-      pointer-events: auto;
-    }
-
-    /* Arrow 控制按鈕圖片 */
-    .arrow-btn {
-      width: 50px;
-      height: 50px;
-      object-fit: contain;
-      cursor: pointer;
-      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
-      transition: transform 0.1s;
-    }
-
-    /* 左箭頭水平鏡像翻轉 */
-    #btn-left {
-      transform: scaleX(-1);
-    }
-
-    #btn-left:active {
-      transform: scaleX(-1) scale(0.9);
-    }
-
-    #btn-right:active, #btn-jump:active {
-      transform: scale(0.9);
-    }
-
-    /* 跳躍按鈕 ▲ (放大點擊區域與圖示) */
-    .touch-btn {
-      width: 50px;
-      height: 50px;
-      background: rgba(255, 255, 255, 0.25);
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 1.4rem;
-      font-weight: bold;
-      backdrop-filter: blur(4px);
-      pointer-events: auto;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
-    }
-
-    /* 事件彈窗 */
-    #event-modal {
-      background: rgba(20, 20, 35, 0.95);
-      border: 2px solid #ff2a74;
-      border-radius: 12px;
-      width: 80%;
-      max-width: 420px;
-      padding: 20px;
-    }
-
-    #event-title {
-      color: #ffd700;
-      margin-bottom: 8px;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- 小遊戲背景音樂用 game.mp3 -->
-  <audio id="game-bgm" src="game.mp3" loop></audio>
-
-  <div id="game-wrapper">
-    <!-- 固定內部解析度標準 16:9 為 800x450，防止任何壓扁與物件太小問題 -->
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
-
-    <!-- 按鈕控制層 -->
-    <div class="controls">
-      <div class="btn-group">
-        <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
-        <img src="arrow.png" class="arrow-btn" id="btn-right" alt="向右">
-      </div>
-      <div class="btn-group">
-        <div class="touch-btn" id="btn-jump">▲</div>
-      </div>
-    </div>
-
-    <!-- 開始畫面 -->
-    <div id="start-screen" class="screen-overlay">
       <h1>偶像星光歷程展</h1>
       <p>
         歡迎來到偶像的回顧之旅！<br>
@@ -489,10 +243,10 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // 固定邏輯標準解析度 (防止手機螢幕手機畫面壓扁與物件過小)
+    // 固定邏輯標準解析度
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
-    const GROUND_Y = 380; // 統一地面粉紅線 Y 軸位置 (更清晰的位置)
+    const GROUND_Y = 380; // 地平線位置
 
     // 載入遊戲圖片資源
     const imgSmall = new Image();
@@ -509,7 +263,7 @@
 
     // 音樂與 UI 元素
     const gameBgm = document.getElementById('game-bgm');
-    gameBgm.volume = 0.5; // 音量
+    gameBgm.volume = 0.5;
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -518,17 +272,17 @@
     const eventDesc = document.getElementById('event-desc');
     const finalScore = document.getElementById('final-score');
 
-    // 遊戲數據與狀態
+    // 遊戲狀態與數據
     let gameState = 'START'; // START, PLAYING, PAUSED, END
     let score = 0;
     let cameraX = 0;
-    const worldWidth = 3200; // 地圖總長度
+    const worldWidth = 3200;
 
-    // 玩家設定 (放大主角)
+    // 玩家控制參數
     const player = {
       x: 100,
-      y: 0,
-      width: 46,  // 放大寬高
+      y: GROUND_Y - 56,
+      width: 46,
       height: 56,
       vx: 0,
       vy: 0,
@@ -536,11 +290,243 @@
       jumpPower: -11.5,
       gravity: 0.55,
       isGrounded: false,
-      facing: 'right', // 面朝方向
-      animTimer: 0     // 動畫計時器
+      facing: 'right'
     };
 
-    // 按鈕控制狀態
+    // 收集品 (small.png)
+    let collectibles = [
+      { x: 300, y: GROUND_Y - 80, size: 36, collected: false },
+      { x: 500, y: GROUND_Y - 130, size: 36, collected: false },
+      { x: 750, y: GROUND_Y - 80, size: 36, collected: false },
+      { x: 1100, y: GROUND_Y - 120, size: 36, collected: false },
+      { x: 1400, y: GROUND_Y - 80, size: 36, collected: false },
+      { x: 1800, y: GROUND_Y - 140, size: 36, collected: false },
+      { x: 2200, y: GROUND_Y - 80, size: 36, collected: false },
+      { x: 2600, y: GROUND_Y - 110, size: 36, collected: false }
+    ];
+
+    // 大事件展區 (big.png)
+    let eventNodes = [
+      { x: 600, y: GROUND_Y - 60, size: 55, title: '初次出道展演', desc: '站上舞台的那一天，璀璨星光由此展開！', triggered: false },
+      { x: 1300, y: GROUND_Y - 60, size: 55, title: '首張專輯發行', desc: '主打歌曲登上榜首，感謝一路相伴的粉絲們！', triggered: false },
+      { x: 2000, y: GROUND_Y - 60, size: 55, title: '世界巡迴演唱會', desc: '萬人場館座無虛席，共同創造震撼的應援紫海！', triggered: false },
+      { x: 2800, y: GROUND_Y - 60, size: 55, title: '榮獲年度最佳歌手', desc: '榮耀时刻，站在巔峰繼續攜手前行！', triggered: false }
+    ];
+
+    // 按鈕與鍵盤輸入控制
     const keys = { left: false, right: false, jump: false };
 
-    //
+    // 播放背景音樂 (解決瀏覽器 Autoplay 限制)
+    function playMusic() {
+      gameBgm.currentTime = 0;
+      gameBgm.play().catch(e => console.log("音樂自動播放阻擋：", e));
+    }
+
+    // 事件監聽：鍵盤
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+      if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && player.isGrounded) {
+        player.vy = player.jumpPower;
+        player.isGrounded = false;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+    });
+
+    // 事件監聽：觸控按鈕
+    const setupTouchBtn = (elementId, keyName) => {
+      const el = document.getElementById(elementId);
+      el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+      el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+      el.addEventListener('mousedown', () => { keys[keyName] = true; });
+      el.addEventListener('mouseup', () => { keys[keyName] = false; });
+    };
+
+    setupTouchBtn('btn-left', 'left');
+    setupTouchBtn('btn-right', 'right');
+
+    const jumpBtn = document.getElementById('btn-jump');
+    const triggerJump = (e) => {
+      if (e) e.preventDefault();
+      if (player.isGrounded) {
+        player.vy = player.jumpPower;
+        player.isGrounded = false;
+      }
+    };
+    jumpBtn.addEventListener('touchstart', triggerJump);
+    jumpBtn.addEventListener('mousedown', triggerJump);
+
+    // 按鈕 UI 操作
+    document.getElementById('start-btn').addEventListener('click', () => {
+      startScreen.classList.add('hidden');
+      gameState = 'PLAYING';
+      playMusic();
+    });
+
+    document.getElementById('close-event-btn').addEventListener('click', () => {
+      eventScreen.classList.add('hidden');
+      gameState = 'PLAYING';
+    });
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      resetGame();
+      endScreen.classList.add('hidden');
+      gameState = 'PLAYING';
+      playMusic();
+    });
+
+    function resetGame() {
+      score = 0;
+      player.x = 100;
+      player.y = GROUND_Y - player.height;
+      player.vx = 0;
+      player.vy = 0;
+      cameraX = 0;
+      collectibles.forEach(c => c.collected = false);
+      eventNodes.forEach(e => e.triggered = false);
+    }
+
+    // 遊戲核心邏輯更新
+    function update() {
+      if (gameState !== 'PLAYING') return;
+
+      // 橫向移動處理
+      if (keys.left) {
+        player.vx = -player.speed;
+        player.facing = 'left';
+      } else if (keys.right) {
+        player.vx = player.speed;
+        player.facing = 'right';
+      } else {
+        player.vx = 0;
+      }
+
+      // 重力與位置更新
+      player.vy += player.gravity;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      // 地平線碰撞判定
+      if (player.y + player.height >= GROUND_Y) {
+        player.y = GROUND_Y - player.height;
+        player.vy = 0;
+        player.isGrounded = true;
+      }
+
+      // 地圖邊界限制
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > worldWidth) {
+        // 抵達終點
+        gameState = 'END';
+        finalScore.innerText = `恭喜你完成了偶像歷程巡演！最終收集了 ${score} 個筒筒！`;
+        endScreen.classList.remove('hidden');
+      }
+
+      // 鏡頭跟隨
+      cameraX = player.x - CANVAS_WIDTH / 3;
+      if (cameraX < 0) cameraX = 0;
+      if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
+
+      // 檢查收集品碰撞
+      collectibles.forEach(c => {
+        if (!c.collected &&
+            player.x < c.x + c.size &&
+            player.x + player.width > c.x &&
+            player.y < c.y + c.size &&
+            player.y + player.height > c.y) {
+          c.collected = true;
+          score += 1;
+        }
+      });
+
+      // 檢查大事件觸發
+      eventNodes.forEach(e => {
+        if (!e.triggered &&
+            player.x < e.x + e.size &&
+            player.x + player.width > e.x &&
+            player.y < e.y + e.size &&
+            player.y + player.height > e.y) {
+          e.triggered = true;
+          gameState = 'PAUSED';
+          eventTitle.innerText = e.title;
+          eventDesc.innerText = e.desc;
+          eventScreen.classList.remove('hidden');
+        }
+      });
+    }
+
+    // 畫面繪製渲染
+    function draw() {
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      // 1. 畫背景與地平線
+      ctx.strokeStyle = '#ff2a74';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND_Y);
+      ctx.lineTo(worldWidth, GROUND_Y);
+      ctx.stroke();
+
+      // 2. 畫大事件展區 (big.png)
+      eventNodes.forEach(e => {
+        if (imgBig.complete && imgBig.naturalWidth !== 0) {
+          ctx.drawImage(imgBig, e.x, e.y, e.size, e.size);
+        } else {
+          ctx.fillStyle = e.triggered ? '#555' : '#ffd700';
+          ctx.fillRect(e.x, e.y, e.size, e.size);
+        }
+      });
+
+      // 3. 畫收集品 (small.png)
+      collectibles.forEach(c => {
+        if (!c.collected) {
+          if (imgSmall.complete && imgSmall.naturalWidth !== 0) {
+            ctx.drawImage(imgSmall, c.x, c.y, c.size, c.size);
+          } else {
+            ctx.fillStyle = '#ff758c';
+            ctx.beginPath();
+            ctx.arc(c.x + c.size/2, c.y + c.size/2, c.size/2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+
+      // 4. 畫玩家主角
+      const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
+      if (curImg.complete && curImg.naturalWidth !== 0) {
+        ctx.drawImage(curImg, player.x, player.y, player.width, player.height);
+      } else {
+        ctx.fillStyle = '#00f0ff';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+      }
+
+      ctx.restore();
+
+      // 5. 畫頂部固定 UI (得分標示)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px Arial';
+      ctx.shadowColor = '#000000';
+      ctx.shadowBlur = 4;
+      ctx.fillText(`收集筒筒數: ${score}`, 20, 35);
+      ctx.shadowBlur = 0;
+    }
+
+    // 遊戲主迴圈
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 啟動遊戲迴圈
+    gameLoop();
+  </script>
+</body>
+</html>
