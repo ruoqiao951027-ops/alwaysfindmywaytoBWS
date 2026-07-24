@@ -116,16 +116,16 @@
       transform: scale(0.95);
     }
 
-    /* 控制按鈕容器 */
+    /* 控制按鈕容器：向上移動 (bottom: 65px) */
     .controls {
       position: absolute;
-      bottom: 20px;
+      bottom: 65px;
       left: 0;
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      padding: 0 25px;
+      padding: 0 30px;
       padding-bottom: env(safe-area-inset-bottom);
       pointer-events: none;
       z-index: 5;
@@ -138,10 +138,10 @@
       pointer-events: auto;
     }
 
-    /* Arrow 按鈕：縮小至 75px */
+    /* Arrow 按鈕：調大至 95px */
     .arrow-btn {
-      width: 75px;
-      height: 75px;
+      width: 95px;
+      height: 95px;
       object-fit: contain;
       cursor: pointer;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
@@ -159,7 +159,7 @@
       transform: scale(0.9);
     }
 
-    /* 跳躍按鈕：大幅縮小至 55px */
+    /* 跳躍按鈕 */
     .touch-btn {
       width: 55px;
       height: 55px;
@@ -247,7 +247,7 @@
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
     
-    // 地平線向下調整：位於畫布高度的 65% 處
+    // 地平線維持剛好高度（65%）
     const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.65);
 
     // 音樂播放器與極速解鎖機制
@@ -263,11 +263,10 @@
       }
     }
 
-    // 當使用者點擊頁面任何區域時，第一時間觸發背景音樂播放
     window.addEventListener('click', initAudio, { once: true });
     window.addEventListener('touchstart', initAudio, { once: true });
 
-    // 載入圖片與載入狀態追蹤
+    // 載入圖片與狀態追蹤
     const images = {};
     function loadImage(key, src) {
       const img = new Image();
@@ -299,12 +298,12 @@
     let cameraX = 0;
     const worldWidth = 3200;
 
-    // 玩家設定：顯著放大至 80x100
+    // 玩家設定：再放大至 110x138
     const player = {
       x: 100,
       y: 0,
-      width: 80,
-      height: 100,
+      width: 110,
+      height: 138,
       vx: 0,
       vy: 0,
       speed: 5.5,
@@ -312,10 +311,10 @@
       gravity: 0.65,
       isGrounded: false,
       facing: 'right',
-      walkTimer: 0 // 用於計算走動搖晃角度
+      walkTimer: 0
     };
 
-    // Small (筒筒) 縮小：基準寬度 50px
+    // Small (筒筒) 基準寬度 50px
     const SMALL_BASE_WIDTH = 50;
     let collectibles = [
       { x: 350, yOffset: 70, collected: false },
@@ -328,7 +327,7 @@
       { x: 2750, yOffset: 110, collected: false }
     ];
 
-    // Big (大事件展區) 大幅縮小：基準寬度 70px
+    // Big (大事件展區) 基準寬度 70px
     const BIG_BASE_WIDTH = 70;
     let eventNodes = [
       { x: 700, title: '初次出道展演', desc: '站上舞台的那一天，璀璨星光由此展開！', triggered: false },
@@ -418,14 +417,14 @@
       if (keys.left) {
         player.vx = -player.speed;
         player.facing = 'left';
-        player.walkTimer += 0.18; // 推進晃動計時
+        player.walkTimer += 0.22; // 步伐節奏
       } else if (keys.right) {
         player.vx = player.speed;
         player.facing = 'right';
-        player.walkTimer += 0.18; // 推進晃動計時
+        player.walkTimer += 0.22; // 步伐節奏
       } else {
         player.vx = 0;
-        player.walkTimer = 0; // 靜止時重置
+        player.walkTimer = 0;
       }
 
       player.vy += player.gravity;
@@ -486,7 +485,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 畫下移後的地平線
+      // 1. 畫地平線
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -494,7 +493,7 @@
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 2. 畫 Big 玩偶（小很多：寬度 70px，貼齊地平線）
+      // 2. 畫 Big 展區
       eventNodes.forEach(e => {
         if (imgBig.complete && imgBig.naturalWidth > 0) {
           const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
@@ -507,7 +506,7 @@
         }
       });
 
-      // 3. 畫 Small 筒筒（小一點：寬度 50px）
+      // 3. 畫 Small 筒筒
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -525,18 +524,17 @@
         }
       });
 
-      // 4. 畫玩家（大很多 + 移動左右晃動效果）
+      // 4. 畫玩家（更大 + 晃動角度更大至約 20 度）
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
       
-      // 移動到玩家中心以做旋轉與繪製
       const centerX = player.x + player.width / 2;
       const centerY = player.y + player.height / 2;
       ctx.translate(centerX, centerY);
 
-      // 如果正在左右移動且在地面上，計算左右搖晃角度（正弦波晃動約 -10° ~ +10°）
+      // 擺動角度調大：約 ±20 度 (0.35 rad)
       if (player.vx !== 0 && player.isGrounded) {
-        const angle = Math.sin(player.walkTimer) * 0.18; // 弧度約 10 度
+        const angle = Math.sin(player.walkTimer) * 0.35;
         ctx.rotate(angle);
       }
 
@@ -550,13 +548,16 @@
 
       ctx.restore();
 
-      // 5. 得分 UI
+      // 5. 得分 UI（修復定位，顯示在左上角最顯眼位置）
+      ctx.save();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px Arial';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
       ctx.shadowColor = '#000000';
-      ctx.shadowBlur = 4;
-      ctx.fillText(`收集筒筒數: ${score}`, 20, 35);
-      ctx.shadowBlur = 0;
+      ctx.shadowBlur = 6;
+      ctx.fillText(`收集筒筒數: ${score}`, 25, 20);
+      ctx.restore();
     }
 
     function gameLoop() {
