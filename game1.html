@@ -42,25 +42,27 @@
       height: 100%;
     }
 
-    /* 計分板：再往下移動，並簡化文字格式 */
+    /* 1. 修正：計分板只要文字，不要外框、背景與陰影 */
     #score-badge {
       position: absolute;
       top: calc(75px + env(safe-area-inset-top));
       left: 20px;
       z-index: 60;
-      color: #3D2E24;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 8px 18px;
-      border-radius: 20px;
-      border: 2px solid #8C6D58;
-      font-size: 1rem;
+      color: #3D2E24; /* 深咖啡色字體 */
+      font-size: 1.05rem;
       font-weight: bold;
       letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      /* 增加文字白底陰影，確保在淺色地形上依然清晰 */
+      text-shadow: 0 1px 2px rgba(255,255,255,0.8);
       pointer-events: none;
       display: flex;
       align-items: center;
       line-height: 1.2;
+      /* 移除背景、邊框、圓角、陰影 */
+      background: none;
+      border: none;
+      padding: 0;
+      box-shadow: none;
     }
 
     @media (orientation: portrait) {
@@ -257,7 +259,6 @@
 
     .touch-btn:active { opacity: 0.95; }
 
-    /* 2. 大事件面板調整：調窄 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -315,7 +316,7 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 1. 計分板內容簡化：累積筒筒數: x -->
+    <!-- 計分板 -->
     <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -456,7 +457,7 @@
 
     let gameState = 'START';
     let collectedSmallCount = 0;
-    let totalScore = 0; // 筒筒數總和
+    let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
 
@@ -477,7 +478,8 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 195; // Cake 設定為寬 195，高度按原始比例渲染
+    // 2. 修正：Cake 小一點點 (從 195 縮小為 165)
+    const CAKE_BASE_WIDTH = 165; 
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -535,8 +537,10 @@
 
       let currentX = 350;
 
+      // 預定 10 個大事件位置
       for (let b = 0; b < 10; b++) {
-        let bigX = currentX + 800 + b * 2200;
+        // 3. 修正：Big 大事件前的空白道路小一點，將 currentX + 800 縮減為 + 350
+        let bigX = currentX + 350 + b * 2200; 
         let bigYOffset = 100;
         if (b === 1) bigYOffset = 115;
         else if (b % 5 === 2) bigYOffset = 130;
@@ -715,7 +719,6 @@
       }
     });
 
-    // 1. 更新分數顯示（加上千分位逗號）
     function updateScoreDisplay() {
       totalScoreEl.innerText = totalScore.toLocaleString();
     }
@@ -802,7 +805,6 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 3. 蛋糕碰撞判定（動態計算原始比例高度）
       if (cakeObject && !cakeObject.triggered) {
         let cakeH = CAKE_BASE_WIDTH;
         if (imgCake.complete && imgCake.naturalWidth > 0) {
@@ -840,7 +842,6 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 吃到 small: +100,000
       collectibles.forEach(c => {
         if (!c.collected) {
           if (player.x < c.x + SMALL_BASE_WIDTH &&
@@ -856,7 +857,6 @@
         }
       });
 
-      // 吃到 big: +500,000
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -940,7 +940,6 @@
         }
       });
 
-      // 3. cake 渲染（維持原圖比例）
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
           const aspect = imgCake.naturalHeight / imgCake.naturalWidth;
