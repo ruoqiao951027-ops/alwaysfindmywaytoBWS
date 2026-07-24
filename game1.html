@@ -546,7 +546,7 @@
 
       let currentX = 250;
 
-      // 1. 開頭先放 5 個 Small 筒筒 (頭 5 個)
+      // 1. 開頭先放 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
@@ -574,45 +574,37 @@
         const layoutType = b % 7;
 
         if (layoutType === 0) {
-          // 上升階梯
           platforms.push({ x: currentX, y: GROUND_Y - 30, w: 70, h: 30 });
           platforms.push({ x: currentX + 60, y: GROUND_Y - 60, w: 70, h: 60 });
           platforms.push({ x: currentX + 120, y: GROUND_Y - 90, w: 80, h: 90 });
           currentX += 260;
         } else if (layoutType === 1) {
-          // 下降階梯
           platforms.push({ x: currentX, y: GROUND_Y - 90, w: 80, h: 90 });
           platforms.push({ x: currentX + 70, y: GROUND_Y - 60, w: 70, h: 60 });
           platforms.push({ x: currentX + 130, y: GROUND_Y - 30, w: 70, h: 30 });
           currentX += 250;
         } else if (layoutType === 2) {
-          // 下降滑坡
           slopes.push({ x1: currentX, y1: GROUND_Y - 90, x2: currentX + 220, y2: GROUND_Y });
           platforms.push({ x: currentX, y: GROUND_Y - 90, w: 60, h: 90 });
           currentX += 260;
         } else if (layoutType === 3) {
-          // 跳躍平台
           platforms.push({ x: currentX, y: GROUND_Y - 40, w: 60, h: 40 });
           platforms.push({ x: currentX + 90, y: GROUND_Y - 80, w: 65, h: 20 });
           platforms.push({ x: currentX + 185, y: GROUND_Y - 120, w: 65, h: 20 });
           currentX += 300;
         } else if (layoutType === 4) {
-          // 山谷地形
           platforms.push({ x: currentX, y: GROUND_Y - 60, w: 70, h: 60 });
           curvedTerrains.push({ x: currentX + 60, w: 200, height: 50, type: 'concave' });
           platforms.push({ x: currentX + 250, y: GROUND_Y - 60, w: 80, h: 60 });
           currentX += 350;
         } else if (layoutType === 5) {
-          // 凹字型弧
           curvedTerrains.push({ x: currentX, w: 240, height: 45, type: 'concave' });
           currentX += 260;
         } else {
-          // 凸字型弧
           curvedTerrains.push({ x: currentX, w: 240, height: 40, type: 'convex' });
           currentX += 260;
         }
 
-        // 大事件平台
         platforms.push({
           x: eventNodes[b].x - 65,
           y: GROUND_Y - eventNodes[b].yOffset,
@@ -622,7 +614,7 @@
 
         currentX = eventNodes[b].x + 200;
 
-        // 在 Big 與下一個 Big 地形之間放置 10 個 Small (9 個間隔，每個間隔 10 個 Small = 90 個)
+        // 在 Big 與下一個地形之間放置 10 個 Small (修正數量從 9 改為 10)
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
             const isHigh = (s % 2 === 1);
@@ -637,8 +629,8 @@
         }
       }
 
-      // 尾端放置 5 個 Small 筒筒 (尾 5 個)
       currentX = eventNodes[9].x + 250;
+      // 結尾放 5 個 Small
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
@@ -918,7 +910,6 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 繪製地面與地形線條
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -949,7 +940,6 @@
       }
       ctx.stroke();
 
-      // 繪製斜坡充填
       slopes.forEach(s => {
         ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
         ctx.beginPath();
@@ -968,7 +958,6 @@
         ctx.stroke();
       });
 
-      // 繪製平台與階梯
       platforms.forEach(p => {
         ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -985,7 +974,6 @@
         ctx.stroke();
       });
 
-      // 繪製 Big 收集品
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -1000,7 +988,6 @@
         }
       });
 
-      // 繪製 Cake 終點
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
           const aspect = imgCake.naturalHeight / imgCake.naturalWidth;
@@ -1013,7 +1000,6 @@
         }
       }
 
-      // 繪製 Small 收集品
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth > 0) {
@@ -1030,7 +1016,6 @@
         }
       });
 
-      // 繪製角色
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
 
