@@ -42,21 +42,21 @@
       height: 100%;
     }
 
-    /* 1. 計分板最上層顯示優化 */
+    /* 3. 修復：計分板位置優化，加入安全邊距與更清楚的樣式 */
     #score-badge {
       position: absolute;
-      top: 15px;
-      left: 18px;
-      z-index: 50;
+      top: calc(18px + env(safe-area-inset-top));
+      left: 20px;
+      z-index: 60;
       color: #3D2E24;
-      background: rgba(255, 255, 255, 0.92);
-      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 18px;
       border-radius: 20px;
       border: 2px solid #8C6D58;
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: bold;
       letter-spacing: 0.5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       pointer-events: none;
       display: flex;
       align-items: center;
@@ -127,7 +127,6 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
 
-    /* 4. 結局文字置中設定 */
     #final-score {
       font-size: 1.05rem;
       line-height: 1.8;
@@ -315,6 +314,7 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
+    <!-- 計分板 -->
     <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0 / 100</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -383,7 +383,7 @@
     const sfxEnd2 = document.getElementById('sound-end2');
 
     const DEFAULT_BGM_VOLUME = 0.3;
-    const LOW_BGM_VOLUME = 0.08; // 3. 結局音量調小
+    const LOW_BGM_VOLUME = 0.08;
 
     gameBgm.volume = DEFAULT_BGM_VOLUME;
     let musicStarted = false;
@@ -412,7 +412,6 @@
       } catch (e) {}
     }
 
-    // 3. 播放結局語音時與之後將 BGM 變小聲
     function playEndSound(isPerfect) {
       gameBgm.volume = LOW_BGM_VOLUME;
 
@@ -498,9 +497,37 @@
     let curvedTerrains = [];
     let cakeObject = null;
 
-    // 2. 精準控制 Small 筒筒放置，不受大事件區域跳過機制干擾
-    function addSmallItemDirect(x, y) {
-      collectibles.push({ x: x, y: y, collected: false });
+    // 計算特定 X 座標上的最上方地面/平台高度
+    function getGroundYAt(x) {
+      let ground = GROUND_Y;
+      
+      // 計算地形弧度
+      curvedTerrains.forEach(ct => {
+        if (x >= ct.x && x <= ct.x + ct.w) {
+          const norm = (x - ct.x) / ct.w;
+          const curveVal = Math.sin(norm * Math.PI) * ct.height;
+          if (ct.type === 'concave') ground = GROUND_Y + curveVal;
+          else if (ct.type === 'convex') ground = GROUND_Y - curveVal;
+        }
+      });
+
+      // 檢查階梯/平台
+      platforms.forEach(p => {
+        if (x >= p.x && x <= p.x + p.w) {
+          if (p.y < ground) {
+            ground = p.y;
+          }
+        }
+      });
+
+      return ground;
+    }
+
+    // 1. 修復：放置 Small 筒筒時，會貼齊目前地點的最上方地表/平台，不再塞進階梯裡
+    function addSmallItemDirect(x, offsetHeight) {
+      const surfaceY = getGroundYAt(x + SMALL_BASE_WIDTH / 2);
+      const finalY = surfaceY - SMALL_BASE_WIDTH - offsetHeight;
+      collectibles.push({ x: x, y: finalY, collected: false });
     }
 
     function generateLevelData() {
@@ -526,14 +553,14 @@
         });
       }
 
-      // 2. 開頭精準放置 5 個 Small 筒筒
+      // 開頭精準放置 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
-        const yPos = (i % 2 === 1) ? GROUND_Y - 140 : GROUND_Y - 60;
-        addSmallItemDirect(currentX, yPos);
+        const offset = (i % 2 === 1) ? 80 : 10;
+        addSmallItemDirect(currentX, offset);
         currentX += 160;
       }
 
-      // 2. 10 個大事件與地形：中間 9 個間隔，每個間隔擺放精準 10 個，共 90 個 Small 筒筒
+      // 生成地形與中間的 Small 筒筒
       for (let b = 0; b < 10; b++) {
         const currentEvent = eventNodes[b];
         const layoutType = b % 5;
@@ -587,18 +614,18 @@
               const pY = isHigh ? GROUND_Y - 80 : GROUND_Y - 40;
               platforms.push({ x: currentX - 15, y: pY, w: 70, h: isHigh ? 80 : 40 });
             }
-            const yPos = isHigh ? GROUND_Y - 130 : GROUND_Y - 60;
-            addSmallItemDirect(currentX, yPos);
+            const offsetHeight = isHigh ? 70 : 10;
+            addSmallItemDirect(currentX, offsetHeight);
             currentX += 140;
           }
         }
       }
 
-      // 2. 結尾精準放置 5 個 Small 筒筒 (5 + 90 + 5 = 100)
+      // 結尾精準放置 5 個 Small 筒筒 (5 + 90 + 5 = 100)
       currentX = eventNodes[9].x + 250;
       for (let i = 0; i < 5; i++) {
-        const yPos = (i % 2 === 1) ? GROUND_Y - 120 : GROUND_Y - 60;
-        addSmallItemDirect(currentX, yPos);
+        const offset = (i % 2 === 1) ? 60 : 10;
+        addSmallItemDirect(currentX, offset);
         currentX += 160;
       }
 
@@ -671,7 +698,6 @@
       gameState = 'PLAYING';
     });
 
-    // 重新開始時恢復原本的 BGM 音量
     document.getElementById('restart-btn').addEventListener('click', () => {
       gameBgm.volume = DEFAULT_BGM_VOLUME;
       resetGame();
@@ -680,14 +706,26 @@
       gameState = 'PLAYING';
     });
 
-    // 4. 新增「回到圖書館」按鈕點擊事件
+    // 2. 修復：「回到圖書館」連結至 index.html 前一個頁面/狀態
     document.getElementById('back-library-btn').addEventListener('click', () => {
-      if (window.parent && window.parent.backToLibrary) {
-        window.parent.backToLibrary();
-      } else if (typeof backToLibrary === 'function') {
-        backToLibrary();
+      // 若被嵌入在 iframe 中，嘗試呼叫父層涵式或父層歷史紀錄
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.backToLibrary === 'function') {
+          window.parent.backToLibrary();
+          return;
+        }
+        if (window.parent.history.length > 1) {
+          window.parent.history.back();
+          return;
+        }
+      }
+
+      // 如果有上一步歷史紀錄，直接回到上一頁 (即 index.html 中進入遊戲前狀態)
+      if (window.history.length > 1) {
+        window.history.back();
       } else {
-        window.location.href = '../index.html'; // 預設導回上一層或首頁
+        // 沒有上一頁紀錄時預設導回 index.html
+        window.location.href = 'index.html';
       }
     });
 
@@ -777,7 +815,7 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 4. 觸發結局判斷與文字替換
+      // 觸發結局判斷
       if (cakeObject && !cakeObject.triggered) {
         if (player.x < cakeObject.x + cakeObject.w &&
             player.x + player.width > cakeObject.x &&
