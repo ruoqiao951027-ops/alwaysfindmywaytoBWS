@@ -42,21 +42,21 @@
       height: 100%;
     }
 
-    /* 3. 修復計分板位置與高度，避免文字被裁切只看得到底部 */
+    /* 1. 計分板最上層顯示優化 */
     #score-badge {
       position: absolute;
-      top: 12px;
+      top: 15px;
       left: 18px;
-      z-index: 20;
+      z-index: 50;
       color: #3D2E24;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 4px 14px;
-      border-radius: 16px;
-      border: 1.5px solid #8C6D58;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 2px solid #8C6D58;
       font-size: 0.95rem;
       font-weight: bold;
       letter-spacing: 0.5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       pointer-events: none;
       display: flex;
       align-items: center;
@@ -127,9 +127,25 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
 
+    /* 4. 結局文字置中設定 */
+    #final-score {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      text-align: center;
+      color: #FFF8F5;
+      margin: 15px 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
     .btn {
-      padding: 10px 26px;
-      font-size: 1rem;
+      padding: 10px 24px;
+      font-size: 0.95rem;
       font-weight: bold;
       color: #fff;
       background: linear-gradient(45deg, #E88D67, #FF6B81);
@@ -138,6 +154,11 @@
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(232, 141, 103, 0.5);
       white-space: nowrap;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(45deg, #8C6D58, #A3826C);
+      box-shadow: 0 4px 12px rgba(140, 109, 88, 0.5);
     }
 
     #start-btn {
@@ -199,13 +220,8 @@
       z-index: 2;
     }
 
-    #label-left {
-      left: 38px;
-    }
-
-    #label-right {
-      right: 38px;
-    }
+    #label-left { left: 38px; }
+    #label-right { right: 38px; }
 
     .arrow-btn {
       width: 105px;
@@ -217,21 +233,10 @@
       transition: opacity 0.2s;
     }
 
-    .arrow-btn:active {
-      opacity: 0.95;
-    }
-
-    #btn-left {
-      transform: scaleX(-1);
-    }
-
-    #btn-left:active {
-      transform: scaleX(-1) scale(0.92);
-    }
-
-    #btn-right:active, #btn-jump:active {
-      transform: scale(0.92);
-    }
+    .arrow-btn:active { opacity: 0.95; }
+    #btn-left { transform: scaleX(-1); }
+    #btn-left:active { transform: scaleX(-1) scale(0.92); }
+    #btn-right:active, #btn-jump:active { transform: scale(0.92); }
 
     .touch-btn {
       width: 65px;
@@ -251,9 +256,7 @@
       opacity: 0.75;
     }
 
-    .touch-btn:active {
-      opacity: 0.95;
-    }
+    .touch-btn:active { opacity: 0.95; }
 
     #event-modal {
       position: relative;
@@ -312,7 +315,7 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 4px;">0 / 100</span></div>
+    <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0 / 100</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -356,9 +359,12 @@
 
     <!-- 結算畫面 -->
     <div id="end-screen" class="screen-overlay hidden">
-      <h1 id="end-title">抵達終點！</h1>
-      <p id="final-score">恭喜你完成了偶像歷程巡演！</p>
-      <button class="btn" id="restart-btn" style="margin-top: 15px;">再次回顧</button>
+      <h1 id="end-title">🎉結局標題</h1>
+      <p id="final-score">結局文字內容</p>
+      <div class="btn-row">
+        <button class="btn" id="restart-btn">再次回顧</button>
+        <button class="btn btn-secondary" id="back-library-btn">回到圖書館</button>
+      </div>
     </div>
   </div>
 
@@ -376,7 +382,10 @@
     const sfxEnd1 = document.getElementById('sound-end1');
     const sfxEnd2 = document.getElementById('sound-end2');
 
-    gameBgm.volume = 0.3;
+    const DEFAULT_BGM_VOLUME = 0.3;
+    const LOW_BGM_VOLUME = 0.08; // 3. 結局音量調小
+
+    gameBgm.volume = DEFAULT_BGM_VOLUME;
     let musicStarted = false;
 
     function initAudio() {
@@ -403,7 +412,10 @@
       } catch (e) {}
     }
 
+    // 3. 播放結局語音時與之後將 BGM 變小聲
     function playEndSound(isPerfect) {
+      gameBgm.volume = LOW_BGM_VOLUME;
+
       if (isPerfect) {
         sfxEnd2.currentTime = 0;
         sfxEnd2.volume = 1.0;
@@ -486,29 +498,9 @@
     let curvedTerrains = [];
     let cakeObject = null;
 
-    function isNearBigEvent(x, margin = 280) {
-      return eventNodes.some(e => Math.abs(e.x - x) < margin);
-    }
-
-    function addSmallItem(x, targetY, isAbsoluteY = false) {
-      if (isNearBigEvent(x)) return;
-
-      let finalY = 0;
-      const overlappingPlatform = platforms.find(p => x + SMALL_BASE_WIDTH > p.x && x < p.x + p.w);
-
-      if (overlappingPlatform) {
-        finalY = overlappingPlatform.y - SMALL_BASE_WIDTH - 2;
-      } else if (isAbsoluteY) {
-        finalY = targetY;
-      } else {
-        const safeYOffset = Math.max(55, targetY);
-        finalY = GROUND_Y - safeYOffset;
-      }
-
-      if (finalY > GROUND_Y - SMALL_BASE_WIDTH) {
-        finalY = GROUND_Y - SMALL_BASE_WIDTH - 5;
-      }
-      collectibles.push({ x: x, y: finalY, collected: false });
+    // 2. 精準控制 Small 筒筒放置，不受大事件區域跳過機制干擾
+    function addSmallItemDirect(x, y) {
+      collectibles.push({ x: x, y: y, collected: false });
     }
 
     function generateLevelData() {
@@ -522,8 +514,6 @@
       // 預定 10 個大事件位置
       for (let b = 0; b < 10; b++) {
         let bigX = currentX + 800 + b * 2200;
-        
-        // 2. 第二個 Big 事件（index 1）高度適度調降至 115px，其餘保持原樣
         let bigYOffset = 100;
         if (b === 1) bigYOffset = 115;
         else if (b % 5 === 2) bigYOffset = 130;
@@ -536,13 +526,14 @@
         });
       }
 
-      // 1. 開頭精準放置 5 個 Small 筒筒
+      // 2. 開頭精準放置 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
-        addSmallItem(currentX, (i % 2 === 1) ? 140 : 60);
+        const yPos = (i % 2 === 1) ? GROUND_Y - 140 : GROUND_Y - 60;
+        addSmallItemDirect(currentX, yPos);
         currentX += 160;
       }
 
-      // 1. 大事件與中間地形：10 個 Big 之間共有 9 個間隔，每個間隔放置 10 個 Small
+      // 2. 10 個大事件與地形：中間 9 個間隔，每個間隔擺放精準 10 個，共 90 個 Small 筒筒
       for (let b = 0; b < 10; b++) {
         const currentEvent = eventNodes[b];
         const layoutType = b % 5;
@@ -554,28 +545,24 @@
           platforms.push({ x: currentX + 200, y: GROUND_Y - 80, w: 70, h: 80 });
           platforms.push({ x: currentX + 260, y: GROUND_Y - 40, w: 70, h: 40 });
           currentX += 450;
-
         } else if (layoutType === 1) {
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 80, y: GROUND_Y - 110, w: 70, h: 20 });
           platforms.push({ x: currentX + 170, y: GROUND_Y - 160, w: 100, h: 20 });
           platforms.push({ x: currentX + 290, y: GROUND_Y - 100, w: 70, h: 100 });
           currentX += 480;
-
         } else if (layoutType === 2) {
           curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'concave' });
           platforms.push({ x: currentX + 250, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 300, y: GROUND_Y - 90, w: 60, h: 90 });
           platforms.push({ x: currentX + 350, y: GROUND_Y - 130, w: 110, h: 130 });
           currentX += 580;
-
         } else if (layoutType === 3) {
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 50, y: GROUND_Y - 100, w: 60, h: 100 });
           platforms.push({ x: currentX + 130, y: GROUND_Y - 60, w: 60, h: 60 });
           platforms.push({ x: currentX + 180, y: GROUND_Y - 120, w: 100, h: 120 });
           currentX += 420;
-
         } else {
           curvedTerrains.push({ x: currentX, w: 240, height: 45, type: 'convex' });
           platforms.push({ x: currentX + 230, y: GROUND_Y - 60, w: 60, h: 60 });
@@ -591,7 +578,7 @@
           h: currentEvent.yOffset
         });
 
-        // 大事件之間的間隔：若不是最後一個大事件，精準擺放 10 個 Small
+        // 擺放間隔內的 10 個 Small 筒筒
         if (b < 9) {
           currentX = currentEvent.x + 220;
           for (let s = 0; s < 10; s++) {
@@ -600,16 +587,18 @@
               const pY = isHigh ? GROUND_Y - 80 : GROUND_Y - 40;
               platforms.push({ x: currentX - 15, y: pY, w: 70, h: isHigh ? 80 : 40 });
             }
-            addSmallItem(currentX, isHigh ? 130 : 60);
+            const yPos = isHigh ? GROUND_Y - 130 : GROUND_Y - 60;
+            addSmallItemDirect(currentX, yPos);
             currentX += 140;
           }
         }
       }
 
-      // 1. 結尾精準放置 5 個 Small 筒筒
+      // 2. 結尾精準放置 5 個 Small 筒筒 (5 + 90 + 5 = 100)
       currentX = eventNodes[9].x + 250;
       for (let i = 0; i < 5; i++) {
-        addSmallItem(currentX, (i % 2 === 1) ? 120 : 60);
+        const yPos = (i % 2 === 1) ? GROUND_Y - 120 : GROUND_Y - 60;
+        addSmallItemDirect(currentX, yPos);
         currentX += 160;
       }
 
@@ -682,11 +671,24 @@
       gameState = 'PLAYING';
     });
 
+    // 重新開始時恢復原本的 BGM 音量
     document.getElementById('restart-btn').addEventListener('click', () => {
+      gameBgm.volume = DEFAULT_BGM_VOLUME;
       resetGame();
       endScreen.classList.add('hidden');
       if (musicStarted) gameBgm.play().catch(() => {});
       gameState = 'PLAYING';
+    });
+
+    // 4. 新增「回到圖書館」按鈕點擊事件
+    document.getElementById('back-library-btn').addEventListener('click', () => {
+      if (window.parent && window.parent.backToLibrary) {
+        window.parent.backToLibrary();
+      } else if (typeof backToLibrary === 'function') {
+        backToLibrary();
+      } else {
+        window.location.href = '../index.html'; // 預設導回上一層或首頁
+      }
     });
 
     function updateScoreDisplay() {
@@ -775,7 +777,7 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 碰觸 Cake 圖案觸發結局
+      // 4. 觸發結局判斷與文字替換
       if (cakeObject && !cakeObject.triggered) {
         if (player.x < cakeObject.x + cakeObject.w &&
             player.x + player.width > cakeObject.x &&
@@ -792,11 +794,11 @@
           playEndSound(isPerfectEnd);
 
           if (isPerfectEnd) {
-            endTitle.innerText = "🌟 完美滿貫結局！";
-            finalScore.innerHTML = `完美達成！你收集到了全數 100 個筒筒與 10 大歷程！<br>感謝你陪伴佑錫邁向璀璨花路🌸`;
+            endTitle.innerText = "🎉隱藏結局";
+            finalScore.innerHTML = `一路擄獲了∞個筒筒的心❤️‍🔥<br>我會陪你走到世界上的每個舞台、每處帷幕<br>以後也一直、一直陪著佑錫走花路吧！`;
           } else {
-            endTitle.innerText = "🎉 抵達巡演終點！";
-            finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>成功收集到 <b>${collectedSmallCount} / 100</b> 個筒筒！`;
+            endTitle.innerText = "🎉幸福結局";
+            finalScore.innerHTML = `一路擄獲了${collectedSmallCount}個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
           }
 
           endScreen.classList.remove('hidden');
