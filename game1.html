@@ -42,10 +42,10 @@
       height: 100%;
     }
 
-    /* 計分板：位置再往下移動，確保完全不被頂部邊界切到 */
+    /* 計分板：再往下移動，並簡化文字格式 */
     #score-badge {
       position: absolute;
-      top: calc(40px + env(safe-area-inset-top));
+      top: calc(75px + env(safe-area-inset-top));
       left: 20px;
       z-index: 60;
       color: #3D2E24;
@@ -257,13 +257,14 @@
 
     .touch-btn:active { opacity: 0.95; }
 
+    /* 2. 大事件面板調整：調窄 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
       border: 2px solid #8C6D58;
       border-radius: 16px;
-      width: 75%;
-      max-width: 380px;
+      width: 55%;
+      max-width: 290px;
       max-height: 80vh;
       padding: 15px;
       display: flex;
@@ -277,27 +278,27 @@
 
     #event-title {
       color: #C0392B;
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       margin-bottom: 5px;
       text-align: center;
     }
 
     #event-image {
       width: 100%;
-      max-height: 180px;
+      max-height: 160px;
       object-fit: contain;
       border-radius: 6px;
-      margin-top: 10px;
+      margin-top: 8px;
       border: none;
       background: transparent;
     }
 
     #close-event-btn {
       position: absolute;
-      right: -125px;
+      right: -115px;
       top: 50%;
       transform: translateY(-50%);
-      padding: 12px 18px;
+      padding: 10px 16px;
     }
 
     #close-event-btn:active {
@@ -314,8 +315,8 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 計分板 -->
-    <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0 / 100</span></div>
+    <!-- 1. 計分板內容簡化：累積筒筒數: x -->
+    <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -455,7 +456,7 @@
 
     let gameState = 'START';
     let collectedSmallCount = 0;
-    let totalScore = 0;
+    let totalScore = 0; // 筒筒數總和
     let cameraX = 0;
     let worldWidth = 28000;
 
@@ -476,8 +477,7 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    // 1. cake 放大 1.5 倍 (130 * 1.5 = 195)
-    const CAKE_BASE_WIDTH = 195;
+    const CAKE_BASE_WIDTH = 195; // Cake 設定為寬 195，高度按原始比例渲染
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -624,9 +624,7 @@
       const cakeX = currentX + 250;
       cakeObject = {
         x: cakeX,
-        y: GROUND_Y - CAKE_BASE_WIDTH * 1.1,
         w: CAKE_BASE_WIDTH,
-        h: CAKE_BASE_WIDTH * 1.1,
         triggered: false
       };
 
@@ -717,8 +715,9 @@
       }
     });
 
+    // 1. 更新分數顯示（加上千分位逗號）
     function updateScoreDisplay() {
-      totalScoreEl.innerText = `${collectedSmallCount} / 100`;
+      totalScoreEl.innerText = totalScore.toLocaleString();
     }
 
     function resetGame() {
@@ -803,11 +802,18 @@
 
       if (player.x < 0) player.x = 0;
 
+      // 3. 蛋糕碰撞判定（動態計算原始比例高度）
       if (cakeObject && !cakeObject.triggered) {
+        let cakeH = CAKE_BASE_WIDTH;
+        if (imgCake.complete && imgCake.naturalWidth > 0) {
+          cakeH = CAKE_BASE_WIDTH * (imgCake.naturalHeight / imgCake.naturalWidth);
+        }
+        const cakeY = GROUND_Y - cakeH;
+
         if (player.x < cakeObject.x + cakeObject.w &&
             player.x + player.width > cakeObject.x &&
-            player.y < cakeObject.y + cakeObject.h &&
-            player.y + player.height > cakeObject.y) {
+            player.y < cakeY + cakeH &&
+            player.y + player.height > cakeY) {
 
           cakeObject.triggered = true;
           gameState = 'END';
@@ -823,7 +829,7 @@
             finalScore.innerHTML = `一路擄獲了∞個筒筒的心❤️‍🔥<br>我會陪你走到世界上的每個舞台、每處帷幕<br>以後也一直、一直陪著佑錫走花路吧！`;
           } else {
             endTitle.innerText = "🎉幸福結局";
-            finalScore.innerHTML = `一路擄獲了${collectedSmallCount}個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
+            finalScore.innerHTML = `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
           }
 
           endScreen.classList.remove('hidden');
@@ -834,6 +840,7 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
+      // 吃到 small: +100,000
       collectibles.forEach(c => {
         if (!c.collected) {
           if (player.x < c.x + SMALL_BASE_WIDTH &&
@@ -849,6 +856,7 @@
         }
       });
 
+      // 吃到 big: +500,000
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -932,12 +940,16 @@
         }
       });
 
+      // 3. cake 渲染（維持原圖比例）
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
-          ctx.drawImage(imgCake, cakeObject.x, cakeObject.y, cakeObject.w, cakeObject.h);
+          const aspect = imgCake.naturalHeight / imgCake.naturalWidth;
+          const drawW = cakeObject.w;
+          const drawH = drawW * aspect;
+          ctx.drawImage(imgCake, cakeObject.x, GROUND_Y - drawH, drawW, drawH);
         } else {
           ctx.fillStyle = '#FF6B81';
-          ctx.fillRect(cakeObject.x, cakeObject.y, cakeObject.w, cakeObject.h);
+          ctx.fillRect(cakeObject.x, GROUND_Y - 180, cakeObject.w, 180);
         }
       }
 
