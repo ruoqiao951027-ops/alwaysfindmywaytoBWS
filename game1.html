@@ -18,21 +18,21 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #0d0d1a;
+      background-color: #000;
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    /* 固定 16:9 比例等比例縮放 */
+    /* 遊戲容器，精確定位與居中 */
     #game-wrapper {
       position: relative;
       width: 100vw;
-      height: 56.25vw; /* 16:9 */
+      height: 56.25vw; /* 16:9 比例 */
       max-height: 100vh;
       max-width: 177.78vh;
-      background: #1a1a2e;
+      background: #0d0d1a;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
@@ -43,28 +43,63 @@
       height: 100%;
     }
 
-    /* 直向螢幕提示 */
-    @media (orientation: portrait) {
-      #game-wrapper::after {
-        content: "📱 請將手機旋轉至橫向以獲得最佳體驗";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.2rem;
-        z-index: 100;
-        text-align: center;
-        padding: 20px;
-      }
+    /* 控制按鈕：向上拉抬，確保完全在粉紅地平線上方 */
+    .controls {
+      position: absolute;
+      bottom: 12%; /* 向上拉抬 12%，避開地平線與手機底部遮擋 */
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 30px;
+      pointer-events: none;
+      z-index: 5;
     }
 
-    /* UI 遮罩 */
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      pointer-events: auto;
+    }
+
+    .arrow-btn {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
+    }
+
+    #btn-left {
+      transform: scaleX(-1);
+    }
+
+    #btn-left:active {
+      transform: scaleX(-1) scale(0.9);
+    }
+
+    #btn-right:active, #btn-jump:active {
+      transform: scale(0.9);
+    }
+
+    .touch-btn {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: bold;
+      backdrop-filter: blur(4px);
+      pointer-events: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    }
+
+    /* UI 遮罩彈窗 */
     .screen-overlay {
       position: absolute;
       top: 0;
@@ -87,102 +122,46 @@
     }
 
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       color: #ff2a74;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     p {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       line-height: 1.5;
       margin-bottom: 15px;
-      max-width: 450px;
+      max-width: 400px;
     }
 
     .btn {
       padding: 8px 22px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: bold;
       color: #fff;
       background: linear-gradient(45deg, #ff2a74, #ff758c);
       border: none;
-      border-radius: 25px;
+      border-radius: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(255, 42, 116, 0.4);
+      box-shadow: 0 4px 12px rgba(255, 42, 116, 0.4);
     }
 
     .btn:active {
       transform: scale(0.95);
     }
 
-    /* 抬高控制按鈕位置，避免被手機底部選單或 Safari 工具列擋住 */
-    .controls {
-      position: absolute;
-      bottom: 30px; /* 向上抬高 */
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 35px;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 15px;
-      pointer-events: auto;
-    }
-
-    .arrow-btn {
-      width: 52px;
-      height: 52px;
-      object-fit: contain;
-      cursor: pointer;
-      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
-    }
-
-    #btn-left {
-      transform: scaleX(-1);
-    }
-
-    #btn-left:active {
-      transform: scaleX(-1) scale(0.9);
-    }
-
-    #btn-right:active, #btn-jump:active {
-      transform: scale(0.9);
-    }
-
-    .touch-btn {
-      width: 52px;
-      height: 52px;
-      background: rgba(255, 255, 255, 0.25);
-      border: 2px solid rgba(255, 255, 255, 0.7);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 1.4rem;
-      font-weight: bold;
-      backdrop-filter: blur(5px);
-      pointer-events: auto;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.6);
-    }
-
     #event-modal {
       background: rgba(20, 20, 35, 0.95);
       border: 2px solid #ff2a74;
-      border-radius: 15px;
+      border-radius: 12px;
       width: 80%;
-      max-width: 420px;
-      padding: 20px;
+      max-width: 400px;
+      padding: 18px;
     }
 
     #event-title {
       color: #ffd700;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -193,6 +172,7 @@
   <div id="game-wrapper">
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
+    <!-- 按鈕控制層 -->
     <div class="controls">
       <div class="btn-group">
         <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
@@ -238,7 +218,7 @@
 
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
-    const GROUND_Y = 360; // 地面高度固定
+    const GROUND_Y = 380; // 統一地面粉紅線 Y 軸位置
 
     const imgSmall = new Image();
     imgSmall.src = 'small.png';
@@ -270,8 +250,8 @@
     const player = {
       x: 100,
       y: 0,
-      width: 48,  
-      height: 58,
+      width: 46,  
+      height: 56,
       vx: 0,
       vy: 0,
       speed: 4.5,
@@ -298,8 +278,8 @@
         if (!events.some(e => Math.abs(e.x - x) < 70)) {
           collectibles.push({
             x: x,
-            y: GROUND_Y - 38 - (Math.random() > 0.5 ? 45 : 0),
-            targetWidth: 54, // small 適度微調放大
+            y: GROUND_Y - 35 - (Math.random() > 0.5 ? 40 : 0),
+            targetWidth: 42,
             collected: false
           });
         }
@@ -425,18 +405,18 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 地面
-      ctx.fillStyle = '#101026';
+      // 地面黑底與粉紅地平線
+      ctx.fillStyle = '#0d0d1a';
       ctx.fillRect(0, GROUND_Y, worldWidth, CANVAS_HEIGHT - GROUND_Y);
       
       ctx.strokeStyle = '#ff2a74';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(0, GROUND_Y);
       ctx.lineTo(worldWidth, GROUND_Y);
       ctx.stroke();
 
-      // 繪製 small.png
+      // 繪製 small.png (小紅怪物)
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth !== 0) {
@@ -453,13 +433,14 @@
         }
       });
 
-      // 繪製 big.png
+      // 繪製 big.png (白色玩偶 - 事件點)
       events.forEach(e => {
         if (!e.triggered) {
-          const bigW = 60; 
+          const bigW = 50; 
           if (imgBig.complete && imgBig.naturalWidth !== 0) {
             const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
             const bigH = bigW * aspect;
+            // 底部精確貼平 GROUND_Y
             ctx.drawImage(imgBig, e.x - bigW/2, GROUND_Y - bigH, bigW, bigH);
           } else {
             ctx.fillStyle = '#ffa502';
@@ -472,20 +453,20 @@
 
       // 終點旗幟
       ctx.fillStyle = '#2ed573';
-      ctx.fillRect(worldWidth - 100, GROUND_Y - 90, 8, 90);
-      ctx.font = 'bold 13px Arial';
-      ctx.fillText('FINISH', worldWidth - 95, GROUND_Y - 98);
+      ctx.fillRect(worldWidth - 100, GROUND_Y - 90, 6, 90);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText('FINISH', worldWidth - 95, GROUND_Y - 75);
 
-      // 繪製主角
+      // 繪製主角 (玩家)
       ctx.save();
-
       const centerX = player.x + player.width / 2;
       const centerY = player.y + player.height / 2;
       ctx.translate(centerX, centerY);
 
       let rotationAngle = 0;
       if (player.vx !== 0 && player.isGrounded) {
-        rotationAngle = Math.sin(player.animTimer) * (12 * Math.PI / 180);
+        rotationAngle = Math.sin(player.animTimer) * (10 * Math.PI / 180);
       }
       ctx.rotate(rotationAngle);
 
@@ -507,15 +488,15 @@
       ctx.restore();
       ctx.restore();
 
-      // UI 分數顯示 (加強陰影邊框)
+      // UI 頂部分數 (固定畫面獨立繪製)
       if (gameState === 'PLAYING' || gameState === 'PAUSED') {
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'left';
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Arial';
         ctx.shadowColor = 'black';
-        ctx.shadowBlur = 4;
-        ctx.fillText(`收集筒筒數: ${score}`, 25, 35);
-        ctx.shadowBlur = 0; // 重置陰影
+        ctx.shadowBlur = 5;
+        ctx.fillText(`收集筒筒數: ${score}`, 20, 35);
+        ctx.restore();
       }
     }
 
