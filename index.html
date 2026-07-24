@@ -49,67 +49,88 @@
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
 
-    /* 進度條軌道：再調粗至 32px */
-.progress-track {
-  position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 380px;
-  height: 32px; /* 再次加粗 */
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  overflow: visible; /* 確保超大手指不被裁切 */
-  backdrop-filter: blur(2px);
-}
+    /* 進度條總容器：定位於中央偏下 (top: 65%) */
+    .progress-container {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-/* 進度條本體 */
-.progress-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #ff758c, #ff2a74);
-  border-radius: 16px;
-  transition: width 0.1s linear;
-}
+    /* 進度條上方的標題 */
+    .splash-title-text {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ff2a74;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px rgba(255, 42, 116, 0.9), 0 2px 5px rgba(0,0,0,0.8);
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
 
-/* 手指圖示：再放大至 220px，並設定 1.5s 瞬間切換角度 */
-.finger-icon {
-  position: absolute;
-  right: -55px; /* 根據 110px 寬度微調中心點置於邊界 */
-  top: 50%;
-  width: 220px; /* 手指大幅放大 */
-  height: 220px;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
-  
-  /* 1.5秒循環，使用 steps(1) 達成兩角度瞬間跳動 */
-  -webkit-animation: fingerJump 1.5s infinite steps(1);
-  animation: fingerJump 1.5s infinite steps(1);
-}
+    /* 進度條軌道：加粗至 32px */
+    .progress-track {
+      position: relative;
+      width: 100%;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      overflow: visible; /* 確保超大手指不被裁切 */
+      backdrop-filter: blur(2px);
+    }
 
-/* 手指兩角度瞬間跳動動畫 (-15deg ↔ +15deg) */
-@-webkit-keyframes fingerJump {
-  0% {
-    transform: translateY(-50%) rotate(-15deg);
-  }
-  50% {
-    transform: translateY(-50%) rotate(15deg);
-  }
-}
+    /* 進度條本體 */
+    .progress-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff758c, #ff2a74);
+      border-radius: 16px;
+      transition: width 0.1s linear;
+    }
 
-@keyframes fingerJump {
-  0% {
-    transform: translateY(-50%) rotate(-15deg);
-  }
-  50% {
-    transform: translateY(-50%) rotate(15deg);
-  }
-}
+    /* 手指圖示：放大至 110px，並推至更右側 (-10px) */
+    .finger-icon {
+      position: absolute;
+      right: -10px; /* 將手指中心點推至進度條最右邊緣 */
+      top: 50%;
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+      
+      /* 0.7秒瞬間切換角度 (-30deg ↔ +30deg) */
+      -webkit-animation: fingerJump 0.7s infinite steps(1);
+      animation: fingerJump 0.7s infinite steps(1);
+    }
+
+    /* 手指兩角度瞬間跳動 Keyframes */
+    @-webkit-keyframes fingerJump {
+      0% {
+        transform: translateY(-50%) rotate(-30deg);
+      }
+      50% {
+        transform: translateY(-50%) rotate(30deg);
+      }
+    }
+
+    @keyframes fingerJump {
+      0% {
+        transform: translateY(-50%) rotate(-30deg);
+      }
+      50% {
+        transform: translateY(-50%) rotate(30deg);
+      }
+    }
+
     /* 2. 介紹文字畫面 */
     #intro-screen {
       position: fixed;
@@ -240,11 +261,14 @@
 </head>
 <body>
 
-  <!-- 1. Splash Screen 待機畫面 (進度條與手指) -->
+  <!-- 1. Splash Screen 待機畫面 (上方標題 + 進度條與手指) -->
   <div id="splash-screen">
-    <div class="progress-track">
-      <div id="progress-bar" class="progress-bar">
-        <img src="finger.png" alt="finger" class="finger-icon">
+    <div class="progress-container">
+      <div class="splash-title-text">筒筒's Library</div>
+      <div class="progress-track">
+        <div id="progress-bar" class="progress-bar">
+          <img src="finger.png" alt="finger" class="finger-icon">
+        </div>
       </div>
     </div>
   </div>
@@ -296,10 +320,9 @@
 
     mainBgm.volume = 0.5;
 
-    // 解決瀏覽器禁止自動播放：只要使用者有任何第一次點擊/觸碰，就嘗試播放音樂
+    // 解除瀏覽器自動播放限制
     function initAudio() {
       mainBgm.play().then(() => {
-        // 成功播放後即可移除監聽
         document.removeEventListener('click', initAudio);
         document.removeEventListener('touchstart', initAudio);
       }).catch(err => {
@@ -318,7 +341,6 @@
         progress = 100;
         clearInterval(loadingInterval);
         
-        // 載入完畢，開啟 Splash Screen 的點擊監聽
         splashScreen.addEventListener('click', handleSplashClick);
         splashScreen.addEventListener('touchstart', handleSplashClick);
       }
@@ -328,7 +350,6 @@
 
     // 階段 1：點擊 Splash Screen
     function handleSplashClick() {
-      // 確保音樂再次觸發播放
       mainBgm.play().catch(err => console.log(err));
 
       splashScreen.classList.add('fade-out');
