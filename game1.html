@@ -546,7 +546,7 @@
 
       let currentX = 250;
 
-      // 1. 開頭先放 5 個 Small 筒筒 (修正問題 3：確保開頭有 5 個 Small)
+      // 1. 開頭先放 5 個 Small 筒筒 (頭 5 個)
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
@@ -557,10 +557,9 @@
 
       // 生成 10 個 Big 大事件
       for (let b = 0; b < 10; b++) {
-        // 修正問題 1：第 3 個 Big (b === 2) 階梯調低為 60 (原本 130)
         let bigYOffset = 100;
         if (b === 1) bigYOffset = 110;
-        else if (b === 2) bigYOffset = 60; // 第三個 Big 階梯大幅降低
+        else if (b === 2) bigYOffset = 60;
         else if (b % 5 === 2) bigYOffset = 70;
         else if (b % 5 === 4) bigYOffset = 110;
 
@@ -623,15 +622,14 @@
 
         currentX = eventNodes[b].x + 200;
 
-        // 在 Big 與下一個地形之間放置 9～10 個 Small
+        // 在 Big 與下一個 Big 地形之間放置 10 個 Small (9 個間隔，每個間隔 10 個 Small = 90 個)
         if (b < 9) {
-          for (let s = 0; s < 9; s++) {
+          for (let s = 0; s < 10; s++) {
             const isHigh = (s % 2 === 1);
-            if (s === 3 || s === 6) {
+            if (s === 3 || s === 7) {
               const pY = isHigh ? GROUND_Y - 60 : GROUND_Y - 30;
               platforms.push({ x: currentX - 15, y: pY, w: 70, h: isHigh ? 60 : 30 });
             }
-            // 修正問題 2：精準設置 offset，確保小筒筒永遠浮於地面/階梯之上，絕對碰得到
             const offsetHeight = isHigh ? 25 : 10;
             addSmallItemDirect(currentX, offsetHeight);
             currentX += 140;
@@ -639,8 +637,9 @@
         }
       }
 
+      // 尾端放置 5 個 Small 筒筒 (尾 5 個)
       currentX = eventNodes[9].x + 250;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
         currentX += 150;
