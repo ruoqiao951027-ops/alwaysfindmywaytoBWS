@@ -42,10 +42,10 @@
       height: 100%;
     }
 
-    /* 3. 修復：計分板位置優化，加入安全邊距與更清楚的樣式 */
+    /* 計分板：位置再往下移動，確保完全不被頂部邊界切到 */
     #score-badge {
       position: absolute;
-      top: calc(18px + env(safe-area-inset-top));
+      top: calc(40px + env(safe-area-inset-top));
       left: 20px;
       z-index: 60;
       color: #3D2E24;
@@ -476,7 +476,8 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 130;
+    // 1. cake 放大 1.5 倍 (130 * 1.5 = 195)
+    const CAKE_BASE_WIDTH = 195;
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -497,11 +498,9 @@
     let curvedTerrains = [];
     let cakeObject = null;
 
-    // 計算特定 X 座標上的最上方地面/平台高度
     function getGroundYAt(x) {
       let ground = GROUND_Y;
       
-      // 計算地形弧度
       curvedTerrains.forEach(ct => {
         if (x >= ct.x && x <= ct.x + ct.w) {
           const norm = (x - ct.x) / ct.w;
@@ -511,7 +510,6 @@
         }
       });
 
-      // 檢查階梯/平台
       platforms.forEach(p => {
         if (x >= p.x && x <= p.x + p.w) {
           if (p.y < ground) {
@@ -523,7 +521,6 @@
       return ground;
     }
 
-    // 1. 修復：放置 Small 筒筒時，會貼齊目前地點的最上方地表/平台，不再塞進階梯裡
     function addSmallItemDirect(x, offsetHeight) {
       const surfaceY = getGroundYAt(x + SMALL_BASE_WIDTH / 2);
       const finalY = surfaceY - SMALL_BASE_WIDTH - offsetHeight;
@@ -538,7 +535,6 @@
 
       let currentX = 350;
 
-      // 預定 10 個大事件位置
       for (let b = 0; b < 10; b++) {
         let bigX = currentX + 800 + b * 2200;
         let bigYOffset = 100;
@@ -553,14 +549,12 @@
         });
       }
 
-      // 開頭精準放置 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 80 : 10;
         addSmallItemDirect(currentX, offset);
         currentX += 160;
       }
 
-      // 生成地形與中間的 Small 筒筒
       for (let b = 0; b < 10; b++) {
         const currentEvent = eventNodes[b];
         const layoutType = b % 5;
@@ -605,7 +599,6 @@
           h: currentEvent.yOffset
         });
 
-        // 擺放間隔內的 10 個 Small 筒筒
         if (b < 9) {
           currentX = currentEvent.x + 220;
           for (let s = 0; s < 10; s++) {
@@ -621,7 +614,6 @@
         }
       }
 
-      // 結尾精準放置 5 個 Small 筒筒 (5 + 90 + 5 = 100)
       currentX = eventNodes[9].x + 250;
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 60 : 10;
@@ -706,9 +698,7 @@
       gameState = 'PLAYING';
     });
 
-    // 2. 修復：「回到圖書館」連結至 index.html 前一個頁面/狀態
     document.getElementById('back-library-btn').addEventListener('click', () => {
-      // 若被嵌入在 iframe 中，嘗試呼叫父層涵式或父層歷史紀錄
       if (window.parent && window.parent !== window) {
         if (typeof window.parent.backToLibrary === 'function') {
           window.parent.backToLibrary();
@@ -720,11 +710,9 @@
         }
       }
 
-      // 如果有上一步歷史紀錄，直接回到上一頁 (即 index.html 中進入遊戲前狀態)
       if (window.history.length > 1) {
         window.history.back();
       } else {
-        // 沒有上一頁紀錄時預設導回 index.html
         window.location.href = 'index.html';
       }
     });
@@ -815,7 +803,6 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 觸發結局判斷
       if (cakeObject && !cakeObject.triggered) {
         if (player.x < cakeObject.x + cakeObject.w &&
             player.x + player.width > cakeObject.x &&
@@ -847,7 +834,6 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // Small 筒筒碰撞收集
       collectibles.forEach(c => {
         if (!c.collected) {
           if (player.x < c.x + SMALL_BASE_WIDTH &&
@@ -863,7 +849,6 @@
         }
       });
 
-      // Big 大事件碰撞判定
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -897,7 +882,6 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 地平線條
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -918,7 +902,6 @@
       }
       ctx.stroke();
 
-      // 繪製階梯與平台
       platforms.forEach(p => {
         ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -935,7 +918,6 @@
         ctx.stroke();
       });
 
-      // 繪製 Big 事件圖案
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -950,7 +932,6 @@
         }
       });
 
-      // 繪製 Cake 蛋糕終點
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
           ctx.drawImage(imgCake, cakeObject.x, cakeObject.y, cakeObject.w, cakeObject.h);
@@ -960,7 +941,6 @@
         }
       }
 
-      // 繪製 Small 筒筒
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth > 0) {
@@ -977,7 +957,6 @@
         }
       });
 
-      // 繪製主角
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
 
