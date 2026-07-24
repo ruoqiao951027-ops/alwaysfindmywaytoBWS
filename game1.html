@@ -18,7 +18,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #E8DFD8; /* 外圍深奶茶襯底 */
+      background-color: #3D2E24; /* 3. 外圍深咖啡色襯底 */
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
@@ -31,9 +31,9 @@
       height: 56.25vw;
       max-height: 100vh;
       max-width: 177.78vh;
-      background: #F5EBE6; /* 遊戲主背景：淺奶茶色 */
+      background: #E2D5C7; /* 3. 遊戲主背景：質感淺咖啡色 */
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      box-shadow: 0 0 25px rgba(0,0,0,0.4);
     }
 
     canvas {
@@ -42,16 +42,21 @@
       height: 100%;
     }
 
+    /* 2. 重構計分板，加入白底半透明膠囊背景，確保清晰可見 */
     #score-badge {
       position: absolute;
-      top: 20px;
-      left: 25px;
+      top: 18px;
+      left: 20px;
       z-index: 20;
-      color: #8C6D58;
-      font-size: 1.2rem;
+      color: #3D2E24; /* 深咖啡字體 */
+      background: rgba(255, 255, 255, 0.85);
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #8C6D58;
+      font-size: 1.1rem;
       font-weight: bold;
       letter-spacing: 1px;
-      text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       pointer-events: none;
     }
 
@@ -63,8 +68,8 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(245, 235, 230, 0.98);
-        color: #5C4033;
+        background: rgba(226, 213, 199, 0.98);
+        color: #3D2E24;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -82,7 +87,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(60, 45, 35, 0.65); /* 柔和半透明遮罩 */
+      background: rgba(45, 32, 23, 0.75); /* 深咖啡半透明遮罩 */
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -93,7 +98,6 @@
       padding: 10px;
     }
 
-    /* 1. 全體往下一點，避免頂部超出畫面 */
     #start-screen {
       justify-content: center;
       padding-top: 30px; 
@@ -107,9 +111,10 @@
       font-size: 1.6rem;
       color: #FF6B81;
       margin-bottom: 12px;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
+    /* 5. 更新標題說明格式 */
     p.intro-text {
       font-size: 0.92rem;
       line-height: 1.6;
@@ -117,20 +122,36 @@
       max-width: 520px;
       text-align: center;
       color: #FFF8F5;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
 
     .btn {
-      padding: 10px 24px;
-      font-size: 0.95rem;
+      padding: 10px 26px;
+      font-size: 1rem;
       font-weight: bold;
       color: #fff;
       background: linear-gradient(45deg, #E88D67, #FF6B81);
       border: none;
       border-radius: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(232, 141, 103, 0.4);
+      box-shadow: 0 4px 12px rgba(232, 141, 103, 0.5);
       white-space: nowrap;
+    }
+
+    /* 6. 開始按鈕閃爍效果 */
+    #start-btn {
+      animation: pulse 1.4s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 107, 129, 0.5);
+      }
+      100% {
+        transform: scale(1.08);
+        box-shadow: 0 0 22px rgba(255, 107, 129, 0.9);
+      }
     }
 
     .btn:active {
@@ -165,13 +186,13 @@
       align-items: center;
     }
 
-    /* 2. 箭頭文字改半透明，距離向內收緊 */
+    /* 1. 箭頭符號文字收緊邊距 */
     .arrow-label {
       position: absolute;
       top: 42px;
       font-size: 1.2rem;
       color: #FFFFFF;
-      opacity: 0.65; /* 半透明效果 */
+      opacity: 0.65;
       text-shadow: 0 1px 3px rgba(0,0,0,0.8);
       font-weight: bold;
       pointer-events: none;
@@ -179,11 +200,11 @@
     }
 
     #label-left {
-      left: 24px; /* 向內靠攏 */
+      left: 38px; /* 距離進一步向內收緊 */
     }
 
     #label-right {
-      right: 24px; /* 向內靠攏 */
+      right: 38px; /* 距離進一步向內收緊 */
     }
 
     .arrow-btn {
@@ -191,7 +212,7 @@
       height: 105px;
       object-fit: contain;
       cursor: pointer;
-      opacity: 0.7;
+      opacity: 0.75;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
       transition: opacity 0.2s;
     }
@@ -215,19 +236,19 @@
     .touch-btn {
       width: 65px;
       height: 65px;
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.45);
       border: 3px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #5C4033;
+      color: #3D2E24;
       font-size: 1.5rem;
       font-weight: bold;
       backdrop-filter: blur(4px);
       pointer-events: auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      opacity: 0.7;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      opacity: 0.75;
     }
 
     .touch-btn:active {
@@ -236,8 +257,8 @@
 
     #event-modal {
       position: relative;
-      background: rgba(255, 248, 245, 0.98);
-      border: 2px solid #E88D67;
+      background: rgba(250, 245, 240, 0.98);
+      border: 2px solid #8C6D58;
       border-radius: 16px;
       width: 75%;
       max-width: 380px;
@@ -247,13 +268,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       overflow: visible;
-      color: #5C4033;
+      color: #3D2E24;
     }
 
     #event-title {
-      color: #D9534F;
+      color: #C0392B;
       font-size: 1.15rem;
       margin-bottom: 5px;
       text-align: center;
@@ -291,6 +312,7 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
+    <!-- 2. 計分板清晰顯示 -->
     <div id="score-badge">累積筒筒數: <span id="total-score">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -311,15 +333,15 @@
       </div>
     </div>
 
-    <!-- 開始畫面 (更新標題說明與下移結構) -->
+    <!-- 5. 開始畫面更新文案與 6. 閃爍按鈕 -->
     <div id="start-screen" class="screen-overlay">
       <h1>佑錫花路旅程</h1>
       <p class="intro-text">
         歡迎來到佑錫的回顧之旅!<br>
-        讓我們隨著佑錫的腳步一起回首這些年的點點滴滴<br>
+        讓我們隨著佑錫的腳步一起回首這些年的點點滴滴~<br>
         ❤️<br>
-        使用左右箭頭控制前進與後退、右下按鈕來跳躍<br>
-        努力收集筒筒與狗狗，解鎖隱藏結局，陪伴佑錫步上花路🌸
+        ●使用左右箭頭控制前進與後退、右下按鈕來跳躍<br>
+        ●努力收集筒筒與狗狗，解鎖隱藏結局，陪伴佑錫步上花路🌸
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -408,7 +430,7 @@
 
     const imgSmall = loadImage('small', 'small.png');
     const imgBig = loadImage('big', 'big.png');
-    const imgCake = loadImage('cake', 'cake.png'); // 5. 載入 cake.png 圖片
+    const imgCake = loadImage('cake', 'cake.png');
     const imgRunRight = loadImage('runRight', 'runright.png');
     const imgRunLeft = loadImage('runLeft', 'runleft.png');
 
@@ -443,7 +465,7 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 130; // 蛋糕圖片寬度
+    const CAKE_BASE_WIDTH = 130;
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -462,24 +484,30 @@
     let eventNodes = [];
     let platforms = [];
     let curvedTerrains = [];
-    let cakeObject = null; // 終點蛋糕物件
+    let cakeObject = null;
 
-    // 4. 嚴格碰撞與重疊保護機制
     function isNearBigEvent(x, margin = 280) {
       return eventNodes.some(e => Math.abs(e.x - x) < margin);
     }
 
+    // 4. 修復 Small 掉進樓梯內問題（新增平台頂部自動校正）
     function addSmallItem(x, targetY, isAbsoluteY = false) {
-      // 若該位置過於靠近任何大事件本體，則直接跳過避免重疊
       if (isNearBigEvent(x)) return;
 
       let finalY = 0;
-      if (isAbsoluteY) {
+      
+      // 檢查是否正好位於某個階梯/平台上，若是則精準貼合於階梯表面
+      const overlappingPlatform = platforms.find(p => x + SMALL_BASE_WIDTH > p.x && x < p.x + p.w);
+
+      if (overlappingPlatform) {
+        finalY = overlappingPlatform.y - SMALL_BASE_WIDTH - 2; // 正好放在階梯頂部上方 2px
+      } else if (isAbsoluteY) {
         finalY = targetY;
       } else {
         const safeYOffset = Math.max(55, targetY);
         finalY = GROUND_Y - safeYOffset;
       }
+
       if (finalY > GROUND_Y - SMALL_BASE_WIDTH) {
         finalY = GROUND_Y - SMALL_BASE_WIDTH - 5;
       }
@@ -494,10 +522,8 @@
 
       let currentX = 350;
 
-      // 預先規劃 10 個 Big 事件的位置，方便防重疊判定
-      let tempX = currentX + 800;
       for (let b = 0; b < 10; b++) {
-        let bigX = tempX;
+        let bigX = currentX + 800 + b * 2200;
         let bigYOffset = 100;
         if (b % 5 === 1) bigYOffset = 160;
         if (b % 5 === 2) bigYOffset = 130;
@@ -508,7 +534,6 @@
           title: eventTitles[b], imgIndex: b + 1,
           triggered: false, collected: false
         });
-        tempX += 2200; // 各大事件之間保持寬裕距離
       }
 
       // 前置 Small 筒筒
@@ -517,36 +542,32 @@
         currentX += 160;
       }
 
-      // 3. 增加更多豐富階梯地形與排列組合
       for (let b = 0; b < 10; b++) {
         const currentEvent = eventNodes[b];
         const layoutType = b % 5;
 
         if (layoutType === 0) {
-          // 組合一：金字塔雙層階梯
           platforms.push({ x: currentX, y: GROUND_Y - 40, w: 70, h: 40 });
           platforms.push({ x: currentX + 60, y: GROUND_Y - 80, w: 70, h: 80 });
           platforms.push({ x: currentX + 120, y: GROUND_Y - 120, w: 90, h: 120 });
           platforms.push({ x: currentX + 200, y: GROUND_Y - 80, w: 70, h: 80 });
           platforms.push({ x: currentX + 260, y: GROUND_Y - 40, w: 70, h: 40 });
 
-          addSmallItem(currentX + 10, GROUND_Y - 40 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 270, GROUND_Y - 40 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 10, 0);
+          addSmallItem(currentX + 270, 0);
           currentX += 450;
 
         } else if (layoutType === 1) {
-          // 組合二：三連空中懸浮步梯
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 80, y: GROUND_Y - 110, w: 70, h: 20 });
           platforms.push({ x: currentX + 170, y: GROUND_Y - 160, w: 100, h: 20 });
           platforms.push({ x: currentX + 290, y: GROUND_Y - 100, w: 70, h: 100 });
 
-          addSmallItem(currentX + 5, 60);
-          addSmallItem(currentX + 300, GROUND_Y - 100 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 5, 0);
+          addSmallItem(currentX + 300, 0);
           currentX += 480;
 
         } else if (layoutType === 2) {
-          // 組合三：谷底凹弧與鋸齒多重階梯
           curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'concave' });
           platforms.push({ x: currentX + 250, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 300, y: GROUND_Y - 90, w: 60, h: 90 });
@@ -556,17 +577,15 @@
           currentX += 580;
 
         } else if (layoutType === 3) {
-          // 組合四：雙峰連貫階梯
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 60, h: 50 });
           platforms.push({ x: currentX + 50, y: GROUND_Y - 100, w: 60, h: 100 });
           platforms.push({ x: currentX + 130, y: GROUND_Y - 60, w: 60, h: 60 });
           platforms.push({ x: currentX + 180, y: GROUND_Y - 120, w: 100, h: 120 });
 
-          addSmallItem(currentX + 10, GROUND_Y - 50 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 10, 0);
           currentX += 420;
 
         } else {
-          // 組合五：凸丘 + 錯落高低跨躍平台
           curvedTerrains.push({ x: currentX, w: 240, height: 45, type: 'convex' });
           platforms.push({ x: currentX + 230, y: GROUND_Y - 60, w: 60, h: 60 });
           platforms.push({ x: currentX + 300, y: GROUND_Y - 110, w: 60, h: 110 });
@@ -576,7 +595,6 @@
           currentX += 560;
         }
 
-        // 大事件平台與 Big 位置綁定
         platforms.push({
           x: currentEvent.x - 65,
           y: GROUND_Y - currentEvent.yOffset,
@@ -584,14 +602,13 @@
           h: currentEvent.yOffset
         });
 
-        // 銜接區域：持續佈設 Small（會由 isNearBigEvent 自動避開 Big）
         currentX = currentEvent.x + 250;
         for (let s = 0; s < 7; s++) {
           const isHigh = (s % 2 === 1);
           if (s === 2 || s === 5) {
             const pY = isHigh ? GROUND_Y - 80 : GROUND_Y - 40;
             platforms.push({ x: currentX - 15, y: pY, w: 70, h: isHigh ? 80 : 40 });
-            addSmallItem(currentX, pY - SMALL_BASE_WIDTH - 8, true);
+            addSmallItem(currentX, 0);
           } else {
             addSmallItem(currentX, isHigh ? 140 : 60);
           }
@@ -599,13 +616,11 @@
         }
       }
 
-      // 收尾區段
       for (let i = 0; i < 5; i++) {
         addSmallItem(currentX, (i % 2 === 1) ? 130 : 60);
         currentX += 170;
       }
 
-      // 5. 終點放置 Cake 蛋糕物件
       const cakeX = currentX + 300;
       cakeObject = {
         x: cakeX,
@@ -767,7 +782,7 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 5. 碰觸 Cake 圖案觸發結局
+      // 碰觸 Cake 圖案觸發結局
       if (cakeObject && !cakeObject.triggered) {
         if (player.x < cakeObject.x + cakeObject.w &&
             player.x + player.width > cakeObject.x &&
@@ -814,7 +829,7 @@
         }
       });
 
-      // Big 大事件精準碰撞判定
+      // Big 大事件碰撞判定
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -848,8 +863,8 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 6. 淺奶茶配色對比優化：地平線條
-      ctx.strokeStyle = '#D9826C';
+      // 3. 深木質咖啡色線條
+      ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
       ctx.beginPath();
 
@@ -869,12 +884,12 @@
       }
       ctx.stroke();
 
-      // 繪製階梯與平台 (淺奶茶搭配暖色調邊框)
+      // 3. 繪製階梯與平台 (淺咖啡搭配溫暖咖啡邊框)
       platforms.forEach(p => {
-        ctx.fillStyle = 'rgba(232, 213, 196, 0.75)';
+        ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
 
-        ctx.strokeStyle = '#C29B85';
+        ctx.strokeStyle = '#8C6D58';
         ctx.lineWidth = 2;
         ctx.strokeRect(p.x, p.y, p.w, p.h);
 
@@ -901,7 +916,7 @@
         }
       });
 
-      // 5. 繪製 Cake 蛋糕終點
+      // 繪製 Cake 蛋糕終點
       if (cakeObject) {
         if (imgCake.complete && imgCake.naturalWidth > 0) {
           ctx.drawImage(imgCake, cakeObject.x, cakeObject.y, cakeObject.w, cakeObject.h);
