@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>偶像歷程回顧之旅</title>
+  <title>佑錫花路旅程</title>
   <style>
     * {
       box-sizing: border-box;
@@ -42,7 +42,6 @@
       height: 100%;
     }
 
-    /* 調整計分板文字樣式 */
     #score-badge {
       position: absolute;
       top: 55px;
@@ -94,25 +93,34 @@
       padding: 10px;
     }
 
+    /* 開始畫面整體位置往上移動 */
+    #start-screen {
+      justify-content: flex-start;
+      padding-top: 45px;
+    }
+
     .hidden {
       display: none !important;
     }
 
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       color: #ff2a74;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 8px rgba(255, 42, 116, 0.5);
     }
 
-    p {
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 15px;
-      max-width: 480px;
+    /* 說明內文精準置中與排版 */
+    p.intro-text {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      max-width: 520px;
+      text-align: center;
     }
 
     .btn {
-      padding: 10px 20px;
+      padding: 10px 24px;
       font-size: 0.95rem;
       font-weight: bold;
       color: #fff;
@@ -156,6 +164,7 @@
       align-items: center;
     }
 
+    /* 方向鍵標籤圖案位置微調：左邊更左，右邊更右 */
     .arrow-label {
       position: absolute;
       top: 42px;
@@ -165,6 +174,14 @@
       font-weight: bold;
       pointer-events: none;
       z-index: 2;
+    }
+
+    #label-left {
+      left: 36px;
+    }
+
+    #label-right {
+      right: 36px;
     }
 
     .arrow-btn {
@@ -272,7 +289,6 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 修改計分板文字 -->
     <div id="score-badge">累積筒筒數: <span id="total-score">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -280,11 +296,11 @@
     <div class="controls">
       <div class="btn-group">
         <div class="arrow-container">
-          <div class="arrow-label">◄</div>
+          <div class="arrow-label" id="label-left">◄</div>
           <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
         </div>
         <div class="arrow-container">
-          <div class="arrow-label">►</div>
+          <div class="arrow-label" id="label-right">►</div>
           <img src="arrow.png" class="arrow-btn" id="btn-right" alt="向右">
         </div>
       </div>
@@ -295,12 +311,12 @@
 
     <!-- 開始畫面 -->
     <div id="start-screen" class="screen-overlay">
-      <h1>偶像星光歷程展</h1>
-      <p>
-        歡迎來到偶像的回顧之旅！<br>
-        • 使用左右箭頭移動與爬樓梯<br>
-        • 使用右下角 <b>▲</b> 跳躍收集高空與階梯上的筒筒<br>
-        • 全關卡共 100 個小型筒筒與 10 大事件，滿分 1,500 萬！
+      <h1>佑錫花路旅程</h1>
+      <p class="intro-text">
+        歡迎來到佑錫的回顧之旅!<br>
+        讓我們隨著佑錫的腳步一起回首這些年的點點滴滴❤️~<br>
+        使用左右箭頭控制前進與後退、右下按鈕來跳躍<br>
+        努力收集筒筒與狗狗，解鎖隱藏結局，陪伴佑錫步上花路🌸
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -404,7 +420,7 @@
     let gameState = 'START';
     let totalScore = 0;
     let cameraX = 0;
-    let worldWidth = 24000;
+    let worldWidth = 26000;
 
     const player = {
       x: 100,
@@ -442,17 +458,14 @@
     let platforms = [];
     let curvedTerrains = [];
 
-    // 安全添加 Small 筒筒，確保絕對不掉進地平線或平台內部
     function addSmallItem(x, targetY, isAbsoluteY = false) {
       let finalY = 0;
       if (isAbsoluteY) {
         finalY = targetY;
       } else {
-        // targetY 代表相對於地面的高度 (必須 >= 55)
         const safeYOffset = Math.max(55, targetY);
         finalY = GROUND_Y - safeYOffset;
       }
-      // 防呆：Small 不得低於地面 (GUARD)
       if (finalY > GROUND_Y - SMALL_BASE_WIDTH) {
         finalY = GROUND_Y - SMALL_BASE_WIDTH - 5;
       }
@@ -467,102 +480,106 @@
 
       let currentX = 350;
 
-      // 起步 5 個 Small 筒筒
+      // 前置 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
-        const heightOff = (i % 2 === 1) ? 140 : 60;
-        addSmallItem(currentX, heightOff);
+        addSmallItem(currentX, (i % 2 === 1) ? 140 : 60);
         currentX += 170;
       }
 
-      // 10 個大區塊 (每區塊 9 個 Small，離 Big 拉開距離)
+      // 10 個多樣化階梯組合大區塊
       for (let b = 0; b < 10; b++) {
-        currentX += 150;
+        currentX += 180;
         const layoutType = b % 5;
         let bigYOffset = 0;
         let bigX = 0;
 
         if (layoutType === 0) {
-          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 75, h: 40 });
-          platforms.push({ x: currentX + 65, y: GROUND_Y - 80, w: 75, h: 80 });
-          platforms.push({ x: currentX + 130, y: GROUND_Y - 120, w: 75, h: 120 });
-          platforms.push({ x: currentX + 195, y: GROUND_Y - 160, w: 120, h: 160 });
-          platforms.push({ x: currentX + 330, y: GROUND_Y - 80, w: 80, h: 80 });
+          // 組合一：金字塔型梯台與高低雙台
+          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 70, h: 40 });
+          platforms.push({ x: currentX + 60, y: GROUND_Y - 80, w: 70, h: 80 });
+          platforms.push({ x: currentX + 120, y: GROUND_Y - 120, w: 80, h: 120 });
+          platforms.push({ x: currentX + 190, y: GROUND_Y - 80, w: 70, h: 80 });
+          platforms.push({ x: currentX + 250, y: GROUND_Y - 40, w: 70, h: 40 });
 
-          // Small 放在平台踏板上方 (不嵌入)
-          addSmallItem(currentX + 15, GROUND_Y - 40 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 220, GROUND_Y - 160 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 345, GROUND_Y - 80 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 10, GROUND_Y - 40 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 135, GROUND_Y - 120 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 260, GROUND_Y - 40 - SMALL_BASE_WIDTH - 8, true);
 
-          bigX = currentX + 235;
-          bigYOffset = 160;
-          currentX += 480;
+          bigX = currentX + 135;
+          bigYOffset = 120;
+          currentX += 420;
 
         } else if (layoutType === 1) {
-          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 70, h: 50 });
-          platforms.push({ x: currentX + 80, y: GROUND_Y - 100, w: 70, h: 100 });
-          platforms.push({ x: currentX + 170, y: GROUND_Y - 150, w: 120, h: 20 });
-          platforms.push({ x: currentX + 310, y: GROUND_Y - 90, w: 70, h: 90 });
+          // 組合二：懸空三連跳階梯 + 右側高階落點
+          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 65, h: 50 });
+          platforms.push({ x: currentX + 90, y: GROUND_Y - 110, w: 75, h: 20 });
+          platforms.push({ x: currentX + 190, y: GROUND_Y - 170, w: 100, h: 20 });
+          platforms.push({ x: currentX + 310, y: GROUND_Y - 100, w: 80, h: 100 });
 
-          addSmallItem(currentX - 50, 60);
-          addSmallItem(currentX + 200, GROUND_Y - 150 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 325, GROUND_Y - 90 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 5, 60);
+          addSmallItem(currentX + 225, GROUND_Y - 170 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 330, GROUND_Y - 100 - SMALL_BASE_WIDTH - 8, true);
 
-          bigX = currentX + 210;
-          bigYOffset = 150;
-          currentX += 460;
+          bigX = currentX + 225;
+          bigYOffset = 170;
+          currentX += 480;
 
         } else if (layoutType === 2) {
-          curvedTerrains.push({ x: currentX, w: 300, height: 60, type: 'concave' });
-          platforms.push({ x: currentX + 280, y: GROUND_Y - 60, w: 70, h: 60 });
-          platforms.push({ x: currentX + 350, y: GROUND_Y - 120, w: 140, h: 120 });
-          platforms.push({ x: currentX + 500, y: GROUND_Y - 60, w: 70, h: 60 });
+          // 組合三：谷底凹弧 + 雙層錯位巨型跳台
+          curvedTerrains.push({ x: currentX, w: 280, height: 60, type: 'concave' });
+          platforms.push({ x: currentX + 260, y: GROUND_Y - 60, w: 70, h: 60 });
+          platforms.push({ x: currentX + 330, y: GROUND_Y - 130, w: 120, h: 130 });
+          platforms.push({ x: currentX + 470, y: GROUND_Y - 70, w: 70, h: 70 });
 
-          addSmallItem(currentX + 130, 60);
-          addSmallItem(currentX + 390, GROUND_Y - 120 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 510, GROUND_Y - 60 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 120, 60);
+          addSmallItem(currentX + 370, GROUND_Y - 130 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 485, GROUND_Y - 70 - SMALL_BASE_WIDTH - 8, true);
 
-          bigX = currentX + 420;
-          bigYOffset = 120;
-          currentX += 620;
+          bigX = currentX + 380;
+          bigYOffset = 130;
+          currentX += 600;
 
         } else if (layoutType === 3) {
-          platforms.push({ x: currentX, y: GROUND_Y - 70, w: 90, h: 70 });
-          platforms.push({ x: currentX + 120, y: GROUND_Y - 130, w: 80, h: 20 });
-          platforms.push({ x: currentX + 230, y: GROUND_Y - 180, w: 110, h: 20 });
-          platforms.push({ x: currentX + 360, y: GROUND_Y - 90, w: 90, h: 90 });
+          // 組合四：陡峭爬昇步梯 + 懸空降落台
+          platforms.push({ x: currentX, y: GROUND_Y - 60, w: 60, h: 60 });
+          platforms.push({ x: currentX + 50, y: GROUND_Y - 110, w: 60, h: 110 });
+          platforms.push({ x: currentX + 100, y: GROUND_Y - 160, w: 110, h: 160 });
+          platforms.push({ x: currentX + 230, y: GROUND_Y - 90, w: 70, h: 20 });
 
-          addSmallItem(currentX + 20, GROUND_Y - 70 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 260, GROUND_Y - 180 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 380, GROUND_Y - 90 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 10, GROUND_Y - 60 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 130, GROUND_Y - 160 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 245, GROUND_Y - 90 - SMALL_BASE_WIDTH - 8, true);
 
-          bigX = currentX + 270;
-          bigYOffset = 180;
-          currentX += 500;
+          bigX = currentX + 135;
+          bigYOffset = 160;
+          currentX += 450;
 
         } else {
+          // 組合五：凸丘 + 鋸齒階梯與跨越平台
           curvedTerrains.push({ x: currentX, w: 260, height: 50, type: 'convex' });
-          platforms.push({ x: currentX + 250, y: GROUND_Y - 60, w: 60, h: 60 });
-          platforms.push({ x: currentX + 310, y: GROUND_Y - 110, w: 130, h: 110 });
-          platforms.push({ x: currentX + 450, y: GROUND_Y - 50, w: 60, h: 50 });
+          platforms.push({ x: currentX + 240, y: GROUND_Y - 50, w: 60, h: 50 });
+          platforms.push({ x: currentX + 290, y: GROUND_Y - 100, w: 60, h: 100 });
+          platforms.push({ x: currentX + 340, y: GROUND_Y - 150, w: 120, h: 150 });
+          platforms.push({ x: currentX + 480, y: GROUND_Y - 70, w: 60, h: 70 });
 
-          addSmallItem(currentX + 110, 110);
-          addSmallItem(currentX + 350, GROUND_Y - 110 - SMALL_BASE_WIDTH - 8, true);
-          addSmallItem(currentX + 455, GROUND_Y - 50 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 100, 110);
+          addSmallItem(currentX + 380, GROUND_Y - 150 - SMALL_BASE_WIDTH - 8, true);
+          addSmallItem(currentX + 490, GROUND_Y - 70 - SMALL_BASE_WIDTH - 8, true);
 
-          bigX = currentX + 365;
-          bigYOffset = 110;
-          currentX += 560;
+          bigX = currentX + 390;
+          bigYOffset = 150;
+          currentX += 580;
         }
 
-        // 添加 Big 事件節點 (確保位置固定不被小組件重疊)
+        // 放置 Big 事件節點 (確保精準定位)
         eventNodes.push({
           x: bigX, yOffset: bigYOffset,
           title: eventTitles[b], imgIndex: b + 1,
           triggered: false, collected: false
         });
 
-        // 銜接區域：與 Big 拉開距離放置剩餘 6 個 Small
-        currentX += 200; // 與 Big 的後方拉開安全距離
+        // 銜接區域：與 Big 拉開距離 (至少 240px 緩衝) 放置剩餘 6 個 Small
+        currentX += 240; 
         for (let s = 0; s < 6; s++) {
           const isHigh = (s % 2 === 1);
           if (s === 2 || s === 4) {
@@ -576,7 +593,7 @@
         }
       }
 
-      // 結尾收尾區段 5 個 Small
+      // 收尾區段 5 個 Small
       for (let i = 0; i < 5; i++) {
         if (i === 2) {
           platforms.push({ x: currentX, y: GROUND_Y - 60, w: 80, h: 60 });
@@ -690,12 +707,10 @@
 
       player.vy += player.gravity;
 
-      // 精準 X 軸水平碰撞 (阻擋主角嵌進階梯內部)
       let nextX = player.x + player.vx;
       const playerBottom = player.y + player.height;
 
       platforms.forEach(p => {
-        // 只有當玩家主體落在平台垂直區域內時進行側邊阻擋
         if (playerBottom > p.y + 8 && player.y < p.y + p.h - 5) {
           if (player.x + player.width <= p.x && nextX + player.width > p.x) {
             nextX = p.x - player.width;
@@ -708,7 +723,6 @@
       player.x = nextX;
       player.y += player.vy;
 
-      // 精準 Y 軸落地碰撞 (阻擋主角踩穿階梯)
       let currentGround = GROUND_Y;
       player.isGrounded = false;
 
@@ -727,7 +741,6 @@
       });
 
       platforms.forEach(p => {
-        // 玩家腳底重疊區域判定
         if (player.x + player.width * 0.75 > p.x && player.x + player.width * 0.25 < p.x + p.w) {
           if (player.y + player.height >= p.y - 14 && player.y + player.height <= p.y + 25 && player.vy >= 0) {
             currentGround = Math.min(currentGround, p.y);
@@ -768,7 +781,7 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // Small 筒筒碰撞與收集
+      // Small 筒筒碰撞收集
       collectibles.forEach(c => {
         if (!c.collected) {
           if (player.x < c.x + SMALL_BASE_WIDTH &&
@@ -783,16 +796,20 @@
         }
       });
 
-      // Big 大事件碰撞與觸發
+      // Big 大事件精準碰撞判定 (收緊判定盒，避免過早誤觸)
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
           const bigY = GROUND_Y - e.yOffset - bigH;
           
-          if (player.x < e.x + BIG_BASE_WIDTH/2 &&
-              player.x + player.width > e.x - BIG_BASE_WIDTH/2 &&
+          // 將寬度判定盒收緊為原本的 50%，主角必須真正碰到圖片本體
+          const hitW = BIG_BASE_WIDTH * 0.5;
+          const hitX = e.x - hitW / 2;
+
+          if (player.x < hitX + hitW &&
+              player.x + player.width > hitX &&
               player.y < bigY + bigH &&
-              player.y + player.height > bigY) {
+              player.y + player.height > bigY + 20) {
             
             e.collected = true;
             e.triggered = true;
@@ -815,7 +832,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 地平線條與弧地形
+      // 1. 地平線條
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -836,7 +853,7 @@
       }
       ctx.stroke();
 
-      // 2. 繪製階梯與高台
+      // 2. 繪製階梯與平台
       platforms.forEach(p => {
         ctx.fillStyle = 'rgba(135, 206, 250, 0.35)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -853,7 +870,7 @@
         ctx.stroke();
       });
 
-      // 3. 繪製 Big 事件展區
+      // 3. 繪製 Big 事件圖案
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -868,7 +885,7 @@
         }
       });
 
-      // 4. 繪製 Small 筒筒 (精準顯示於 safe y 位置)
+      // 4. 繪製 Small 筒筒
       collectibles.forEach(c => {
         if (!c.collected) {
           if (imgSmall.complete && imgSmall.naturalWidth > 0) {
