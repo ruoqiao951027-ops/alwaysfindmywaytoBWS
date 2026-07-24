@@ -43,7 +43,7 @@
       height: 100%;
     }
 
-    /* 計分 UI：純文字、淺藍金字體風格 */
+    /* 計分 UI */
     #score-badge {
       position: absolute;
       top: 55px;
@@ -145,9 +145,10 @@
       z-index: 10;
     }
 
+    /* 修改：將按鈕間距加大（左更左、右更右） */
     .btn-group {
       display: flex;
-      gap: 15px;
+      gap: 25px;
       align-items: flex-end;
       pointer-events: auto;
     }
@@ -159,9 +160,10 @@
       align-items: center;
     }
 
+    /* 修改：箭頭符號位置再降低 (top: 42px) */
     .arrow-label {
       position: absolute;
-      top: 38px;
+      top: 42px;
       font-size: 1.3rem;
       color: #ffffff;
       text-shadow: 0 2px 5px rgba(0,0,0,0.9);
@@ -218,18 +220,35 @@
       opacity: 0.9;
     }
 
+    /* 修改：加大大事件彈窗尺寸 */
     #event-modal {
       background: rgba(20, 20, 35, 0.95);
       border: 2px solid #87cefa;
-      border-radius: 12px;
-      width: 80%;
-      max-width: 420px;
+      border-radius: 16px;
+      width: 85%;
+      max-width: 520px;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
 
     #event-title {
       color: #87cefa;
-      margin-bottom: 8px;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    /* 大事件相片展示區 */
+    #event-image {
+      width: 100%;
+      max-height: 230px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      background-color: rgba(0,0,0,0.3);
+      border: 1px solid rgba(135, 206, 250, 0.3);
     }
   </style>
 </head>
@@ -269,16 +288,16 @@
         歡迎來到偶像的回顧之旅！<br>
         • 使用左下角箭頭移動與爬樓梯<br>
         • 使用右下角 <b>▲</b> 跳躍跨越山谷高台<br>
-        • 挑戰凹字弧形谷與高台山谷，累積高分完成巡演！
+        • 挑戰凹凸波浪地形與高台山谷，解鎖經典歷程照片！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
 
-    <!-- 事件彈窗 -->
+    <!-- 修改：大事件彈窗（加大框框、僅留標題與照片，無小字） -->
     <div id="event-screen" class="screen-overlay hidden">
       <div id="event-modal">
         <h2 id="event-title">大事件標題</h2>
-        <p id="event-desc">大事件詳細內容...</p>
+        <img id="event-image" src="1.png" alt="事件照片">
         <button class="btn" id="close-event-btn">繼續前進</button>
       </div>
     </div>
@@ -299,7 +318,7 @@
     const CANVAS_HEIGHT = 450;
     const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.65);
 
-    // 音訊安全播放
+    // 音訊控制
     const gameBgm = document.getElementById('game-bgm');
     const sfxSound1 = document.getElementById('sound1');
     const sfxSound2 = document.getElementById('sound2');
@@ -353,7 +372,7 @@
     const eventScreen = document.getElementById('event-screen');
     const endScreen = document.getElementById('end-screen');
     const eventTitle = document.getElementById('event-title');
-    const eventDesc = document.getElementById('event-desc');
+    const eventImage = document.getElementById('event-image');
     const finalScore = document.getElementById('final-score');
     const totalScoreEl = document.getElementById('total-score');
 
@@ -384,29 +403,17 @@
       '初次出道展演', '首張單曲爆紅', '舉辦首次見面會', '首張專輯發行', '綜藝節目大獲好評',
       '跨國音樂節嘉賓', '世界巡迴演唱會', '榮獲年度最佳歌手', '達成百萬銷量紀錄', '十週年紀念演唱會'
     ];
-    const eventDescs = [
-      '站上舞台的那一天，璀璨星光由此展開！',
-      '旋律傳遍街頭巷尾，登上流行榜單第一名！',
-      '與現場粉絲溫馨互動，收穫無數感動與淚水！',
-      '展現多樣音樂風格，獲評論家與歌迷一致盛讚！',
-      '憑藉獨特魅力與幽默感圈粉無數，引爆討論熱潮！',
-      '代表登上國際舞台，向世界展示獨一無二的震撼演出！',
-      '萬人場館座無虛席，共同創造震撼的應援紫海！',
-      '榮耀時刻，站在巔峰繼續攜手前行！',
-      '突破歷史性的銷量里程碑，成為殿堂級傳奇！',
-      '感謝一路相伴，未來的星光之路依然一同耀眼綻放！'
-    ];
 
     let collectibles = [];
     let eventNodes = [];
     let platforms = [];
-    let uValleys = [];
+    let curvedTerrains = []; // 包含凹字谷 (type: 'concave') 與 凸字丘 (type: 'convex')
 
     function generateLevelData() {
       collectibles = [];
       eventNodes = [];
       platforms = [];
-      uValleys = [];
+      curvedTerrains = [];
 
       let currentX = 400;
       const stepX = 130;
@@ -423,47 +430,53 @@
         let bigYOffset = 0;
 
         if (layoutType === 0) {
-          platforms.push({ x: currentX, y: GROUND_Y - 45, w: 90, h: 45 });
-          platforms.push({ x: currentX + 75, y: GROUND_Y - 90, w: 90, h: 90 });
-          platforms.push({ x: currentX + 150, y: GROUND_Y - 135, w: 260, h: 135 });
+          // 凸字形弧形丘 (Convex Hill)
+          curvedTerrains.push({ x: currentX, w: 380, height: 65, type: 'convex' });
 
-          bigYOffset = 135;
+          bigYOffset = 65;
           eventNodes.push({
-            x: currentX + 270, yOffset: bigYOffset,
-            title: eventTitles[b], desc: eventDescs[b],
+            x: currentX + 190, yOffset: bigYOffset,
+            title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
 
-          currentX += 450;
+          currentX += 420;
 
         } else if (layoutType === 1) {
-          uValleys.push({ x: currentX, w: 360, depth: 70 });
+          // 凹字形弧形谷 (Concave Valley)
+          curvedTerrains.push({ x: currentX, w: 360, height: 70, type: 'concave' });
 
           bigYOffset = 0;
           eventNodes.push({
             x: currentX + 180, yOffset: bigYOffset,
-            title: eventTitles[b], desc: eventDescs[b],
+            title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
 
           currentX += 400;
 
         } else if (layoutType === 2) {
-          platforms.push({ x: currentX, y: GROUND_Y - 110, w: 160, h: 110 });
+          // 高台山谷挑戰 (Gap / Valley Challenge)
+          // 高台 A -> 寬山谷 -> 高台 B
+          platforms.push({ x: currentX, y: GROUND_Y - 120, w: 160, h: 120 });
           
-          bigYOffset = 110;
+          bigYOffset = 120;
           eventNodes.push({
             x: currentX + 80, yOffset: bigYOffset,
-            title: eventTitles[b], desc: eventDescs[b],
+            title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
 
-          platforms.push({ x: currentX + 260, y: GROUND_Y - 50, w: 70, h: 50 });
-          platforms.push({ x: currentX + 370, y: GROUND_Y - 110, w: 180, h: 110 });
+          // 山谷中央底部的小爬梯（沒跳過可以重新爬回右側）
+          platforms.push({ x: currentX + 270, y: GROUND_Y - 50, w: 70, h: 50 });
+          
+          // 高台 B
+          platforms.push({ x: currentX + 380, y: GROUND_Y - 120, w: 180, h: 120 });
 
-          currentX += 580;
+          currentX += 600;
 
         } else {
+          // 階梯金字塔
           platforms.push({ x: currentX, y: GROUND_Y - 50, w: 80, h: 50 });
           platforms.push({ x: currentX + 65, y: GROUND_Y - 100, w: 180, h: 100 });
           platforms.push({ x: currentX + 230, y: GROUND_Y - 50, w: 80, h: 50 });
@@ -471,13 +484,14 @@
           bigYOffset = 100;
           eventNodes.push({
             x: currentX + 150, yOffset: bigYOffset,
-            title: eventTitles[b], desc: eventDescs[b],
+            title: eventTitles[b], imgIndex: b + 1,
             triggered: false, collected: false
           });
 
           currentX += 380;
         }
 
+        // 生成 Small 筒筒
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
             let yOff = 50;
@@ -622,11 +636,17 @@
       player.isGrounded = false;
 
       const playerCenterX = player.x + player.width * 0.5;
-      uValleys.forEach(uv => {
-        if (playerCenterX >= uv.x && playerCenterX <= uv.x + uv.w) {
-          const norm = (playerCenterX - uv.x) / uv.w;
-          const valleyOffset = Math.sin(norm * Math.PI) * uv.depth;
-          currentGround = GROUND_Y + valleyOffset;
+      
+      // 計算凹凹凸凸弧形地形的高度
+      curvedTerrains.forEach(ct => {
+        if (playerCenterX >= ct.x && playerCenterX <= ct.x + ct.w) {
+          const norm = (playerCenterX - ct.x) / ct.w;
+          const curveVal = Math.sin(norm * Math.PI) * ct.height;
+          if (ct.type === 'concave') {
+            currentGround = GROUND_Y + curveVal; // 中間沉降
+          } else if (ct.type === 'convex') {
+            currentGround = GROUND_Y - curveVal; // 中間隆起
+          }
         }
       });
 
@@ -689,7 +709,8 @@
 
             gameState = 'PAUSED';
             eventTitle.innerText = e.title;
-            eventDesc.innerText = e.desc;
+            // 載入 1.png ~ 10.png 對應圖片
+            eventImage.src = `${e.imgIndex}.png`;
             eventScreen.classList.remove('hidden');
           }
         }
@@ -702,19 +723,20 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 1. 安全繪製地平線與凹字谷（絕不陷入無限死迴圈）
+      // 1. 安全繪製包含「凹字谷」與「凸字丘」的地平線
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
       
-      let stepX = 20;
+      let stepX = 15;
       ctx.moveTo(0, GROUND_Y);
       for (let px = 0; px <= worldWidth; px += stepX) {
         let py = GROUND_Y;
-        for (let uv of uValleys) {
-          if (px >= uv.x && px <= uv.x + uv.w) {
-            const norm = (px - uv.x) / uv.w;
-            py = GROUND_Y + Math.sin(norm * Math.PI) * uv.depth;
+        for (let ct of curvedTerrains) {
+          if (px >= ct.x && px <= ct.x + ct.w) {
+            const norm = (px - ct.x) / ct.w;
+            const curveVal = Math.sin(norm * Math.PI) * ct.height;
+            py = ct.type === 'concave' ? GROUND_Y + curveVal : GROUND_Y - curveVal;
             break;
           }
         }
@@ -802,7 +824,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // 初始化關卡並啟動渲染
     generateLevelData();
     gameLoop();
   </script>
