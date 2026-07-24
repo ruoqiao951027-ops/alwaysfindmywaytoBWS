@@ -43,17 +43,17 @@
       height: 100%;
     }
 
-    /* 極簡計分 UI：無框、無大事件，純文字 */
+    /* 計分 UI：純文字、淺藍金字體風格 */
     #score-badge {
       position: absolute;
       top: 55px;
       left: 25px;
       z-index: 20;
-      color: #ffd700;
-      font-size: 1.4rem;
+      color: #87cefa;
+      font-size: 1.3rem;
       font-weight: bold;
       letter-spacing: 1px;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 10px rgba(255, 215, 0, 0.5);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 10px rgba(135, 206, 250, 0.5);
       pointer-events: none;
     }
 
@@ -119,11 +119,11 @@
       font-size: 1rem;
       font-weight: bold;
       color: #fff;
-      background: linear-gradient(45deg, #ff2a74, #ff758c);
+      background: linear-gradient(45deg, #00bfff, #87cefa);
       border: none;
       border-radius: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 42, 116, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 191, 255, 0.4);
     }
 
     .btn:active {
@@ -159,9 +159,10 @@
       align-items: center;
     }
 
+    /* 修正：箭頭符號位置下移至圖案中央 */
     .arrow-label {
       position: absolute;
-      top: 18px;
+      top: 38px;
       font-size: 1.3rem;
       color: #ffffff;
       text-shadow: 0 2px 5px rgba(0,0,0,0.9);
@@ -220,7 +221,7 @@
 
     #event-modal {
       background: rgba(20, 20, 35, 0.95);
-      border: 2px solid #ff2a74;
+      border: 2px solid #87cefa;
       border-radius: 12px;
       width: 80%;
       max-width: 420px;
@@ -228,7 +229,7 @@
     }
 
     #event-title {
-      color: #ffd700;
+      color: #87cefa;
       margin-bottom: 8px;
     }
   </style>
@@ -241,8 +242,8 @@
   <audio id="sound2" src="sound2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
-    <!-- 極簡極致 UI -->
-    <div id="score-badge">筒筒: <span id="small-count">0</span> / 100</div>
+    <!-- 修正後的計分 UI -->
+    <div id="score-badge">收集筒筒數: <span id="total-score">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -268,9 +269,9 @@
       <h1>偶像星光歷程展</h1>
       <p>
         歡迎來到偶像的回顧之旅！<br>
-        • 使用左下角箭頭移動與攀爬樓梯<br>
-        • 使用右下角 <b>▲</b> 跳躍收集高處筒筒與大事件<br>
-        • 踩上樓梯、順著斜坡滑下，集齊 100 個筒筒完成巡演！
+        • 使用左下角箭頭移動與爬樓梯<br>
+        • 使用右下角 <b>▲</b> 跳躍跨越山谷高台<br>
+        • 挑戰凹字弧形谷與高台山谷，累積高分完成巡演！
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -316,7 +317,6 @@
     }
 
     function playSound1() {
-      // 克隆節點播放，支援快速連續吃 Small 音效疊加
       const soundClone = sfxSound1.cloneNode();
       soundClone.volume = 0.8;
       soundClone.play().catch(() => {});
@@ -353,12 +353,11 @@
     const eventTitle = document.getElementById('event-title');
     const eventDesc = document.getElementById('event-desc');
     const finalScore = document.getElementById('final-score');
-    const smallCountEl = document.getElementById('small-count');
+    const totalScoreEl = document.getElementById('total-score');
 
-    // 遊戲狀態與長度
+    // 遊戲狀態與得分計算 (Small: 100000, Big: 500000)
     let gameState = 'START';
-    let smallCollectedCount = 0;
-    let bigCollectedCount = 0;
+    let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 16000;
 
@@ -400,89 +399,110 @@
 
     let collectibles = [];
     let eventNodes = [];
-    let platforms = []; // 實體高台與樓梯
-    let slopes = [];    // 斜坡滑梯
+    let platforms = []; // 淺藍色階梯與高台
+    let uValleys = [];  // 凹字形弧形谷地形
 
     function generateLevelData() {
       collectibles = [];
       eventNodes = [];
       platforms = [];
-      slopes = [];
+      uValleys = [];
 
       let currentX = 400;
       const stepX = 130;
 
-      // 開頭 5 個 small
-      const startHeights = [20, 110, 190, 120, 30];
+      // 開頭 5 個 small（yOffset 修正為至少 50，確保完全不掉到地平線下）
+      const startHeights = [50, 110, 190, 120, 60];
       for (let i = 0; i < 5; i++) {
         collectibles.push({ x: currentX, yOffset: startHeights[i], collected: false });
         currentX += stepX;
       }
 
-      // 生成 10 個區域（含樓梯、滑坡地形）
+      // 生成 10 個多變區域
       for (let b = 0; b < 10; b++) {
         currentX += 150;
-        const layoutType = b % 3;
+        const layoutType = b % 4; // 0: 上樓梯滑梯, 1: 凹字弧形谷, 2: 高台山谷挑戰, 3: 階梯金字塔
+
         let bigYOffset = 0;
 
         if (layoutType === 0) {
-          // 階梯上樓 -> 高台 -> 滑坡下樓
-          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 100, h: 40 });
-          platforms.push({ x: currentX + 80, y: GROUND_Y - 80, w: 100, h: 80 });
-          platforms.push({ x: currentX + 160, y: GROUND_Y - 120, w: 260, h: 120 }); // 頂高台
+          // 階梯上樓高台
+          platforms.push({ x: currentX, y: GROUND_Y - 45, w: 90, h: 45 });
+          platforms.push({ x: currentX + 75, y: GROUND_Y - 90, w: 90, h: 90 });
+          platforms.push({ x: currentX + 150, y: GROUND_Y - 135, w: 260, h: 135 });
 
-          bigYOffset = 120;
+          bigYOffset = 135;
           eventNodes.push({
-            x: currentX + 280, yOffset: bigYOffset,
+            x: currentX + 270, yOffset: bigYOffset,
             title: eventTitles[b], desc: eventDescs[b],
             triggered: false, collected: false
           });
 
-          // 右側接滑坡下來
-          slopes.push({
-            x1: currentX + 420, y1: GROUND_Y - 120,
-            x2: currentX + 580, y2: GROUND_Y
-          });
-
-          currentX += 650;
+          currentX += 450;
 
         } else if (layoutType === 1) {
-          // 金字塔雙向樓梯
-          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 90, h: 50 });
-          platforms.push({ x: currentX + 70, y: GROUND_Y - 100, w: 200, h: 100 });
-          platforms.push({ x: currentX + 250, y: GROUND_Y - 50, w: 90, h: 50 });
+          // 凹字形弧形谷 (U-Shape Valley)
+          uValleys.push({
+            x: currentX,
+            w: 360,
+            depth: 70
+          });
 
-          bigYOffset = 100;
+          bigYOffset = 0;
           eventNodes.push({
-            x: currentX + 170, yOffset: bigYOffset,
+            x: currentX + 180, yOffset: bigYOffset,
             title: eventTitles[b], desc: eventDescs[b],
             triggered: false, collected: false
           });
 
-          currentX += 420;
+          currentX += 400;
 
-        } else {
-          // 平地 Big + 懸空跳躍階梯
-          bigYOffset = 0;
+        } else if (layoutType === 2) {
+          // 高台山谷地形：高台 A -> 中間空隙(山谷/地面) -> 爬階梯上高台 B
+          // 高台 A
+          platforms.push({ x: currentX, y: GROUND_Y - 110, w: 160, h: 110 });
+          
+          // Big 放在高台 A 頂端
+          bigYOffset = 110;
           eventNodes.push({
             x: currentX + 80, yOffset: bigYOffset,
             title: eventTitles[b], desc: eventDescs[b],
             triggered: false, collected: false
           });
 
-          platforms.push({ x: currentX + 220, y: GROUND_Y - 70, w: 110, h: 70 });
-          platforms.push({ x: currentX + 360, y: GROUND_Y - 130, w: 110, h: 130 });
-          currentX += 520;
+          // 山谷空隙中間的救援階梯（掉到谷底後可以爬回右側）
+          platforms.push({ x: currentX + 260, y: GROUND_Y - 50, w: 70, h: 50 });
+          
+          // 高台 B
+          platforms.push({ x: currentX + 370, y: GROUND_Y - 110, w: 180, h: 110 });
+
+          currentX += 580;
+
+        } else {
+          // 階梯金字塔
+          platforms.push({ x: currentX, y: GROUND_Y - 50, w: 80, h: 50 });
+          platforms.push({ x: currentX + 65, y: GROUND_Y - 100, w: 180, h: 100 });
+          platforms.push({ x: currentX + 230, y: GROUND_Y - 50, w: 80, h: 50 });
+
+          bigYOffset = 100;
+          eventNodes.push({
+            x: currentX + 150, yOffset: bigYOffset,
+            title: eventTitles[b], desc: eventDescs[b],
+            triggered: false, collected: false
+          });
+
+          currentX += 380;
         }
 
+        // 生成 Small 筒筒（保證高於地平線，配合地形變化）
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
-            let yOff = 20;
+            let yOff = 50; // 安全基準高度，防止沉入地底
             const hPattern = (s + b) % 5;
-            if (hPattern === 1) yOff = 120;
-            if (hPattern === 2) yOff = 210; 
-            if (hPattern === 3) yOff = 160;
-            if (hPattern === 4) yOff = 60;
+            if (hPattern === 1) yOff = 130;
+            if (hPattern === 2) yOff = 220; 
+            if (hPattern === 3) yOff = 170;
+            if (hPattern === 4) yOff = 80;
 
             collectibles.push({ x: currentX, yOffset: yOff, collected: false });
             currentX += stepX;
@@ -491,7 +511,7 @@
       }
 
       currentX += 100;
-      const endHeights = [30, 130, 200, 140, 30];
+      const endHeights = [50, 130, 210, 140, 50];
       for (let i = 0; i < 5; i++) {
         collectibles.push({ x: currentX, yOffset: endHeights[i], collected: false });
         currentX += stepX;
@@ -561,12 +581,11 @@
     });
 
     function updateScoreDisplay() {
-      smallCountEl.innerText = smallCollectedCount;
+      totalScoreEl.innerText = totalScore.toLocaleString();
     }
 
     function resetGame() {
-      smallCollectedCount = 0;
-      bigCollectedCount = 0;
+      totalScore = 0;
       updateScoreDisplay();
 
       generateLevelData();
@@ -579,11 +598,10 @@
       cameraX = 0;
     }
 
-    // 邏輯更新（含實體牆面撞擊阻擋）
+    // 邏輯更新
     function update() {
       if (gameState !== 'PLAYING') return;
 
-      // 放慢擺動速度：步長縮小為 0.1
       if (keys.left) {
         player.vx = -player.speed;
         player.facing = 'left';
@@ -599,19 +617,15 @@
 
       player.vy += player.gravity;
 
-      // X 軸移動與實體阻擋檢測
+      // X 軸移動與高台側邊實體阻擋
       let nextX = player.x + player.vx;
       const feetY = player.y + player.height;
 
       platforms.forEach(p => {
-        // 當玩家高度低於平台頂端時，視為實體牆阻擋
-        if (feetY > p.y + 10 && player.y < p.y + p.h) {
-          // 從左側撞牆
+        if (feetY > p.y + 12 && player.y < p.y + p.h) {
           if (player.x + player.width <= p.x && nextX + player.width > p.x) {
             nextX = p.x - player.width;
-          }
-          // 從右側撞牆
-          else if (player.x >= p.x + p.w && nextX < p.x + p.w) {
+          } else if (player.x >= p.x + p.w && nextX < p.x + p.w) {
             nextX = p.x + p.w;
           }
         }
@@ -620,26 +634,25 @@
       player.x = nextX;
       player.y += player.vy;
 
-      // Y 軸高度與站立檢測
+      // Y 軸地面與地形高度計算
       let currentGround = GROUND_Y;
       player.isGrounded = false;
 
-      // 1. 樓梯平台頂部站立
+      // 1. 凹字弧形谷高度修正
+      const playerCenterX = player.x + player.width * 0.5;
+      uValleys.forEach(uv => {
+        if (playerCenterX >= uv.x && playerCenterX <= uv.x + uv.w) {
+          const norm = (playerCenterX - uv.x) / uv.w; // 0 ~ 1
+          const valleyOffset = Math.sin(norm * Math.PI) * uv.depth;
+          currentGround = GROUND_Y + valleyOffset;
+        }
+      });
+
+      // 2. 淺藍階梯/高台頂部踩踏
       platforms.forEach(p => {
         if (player.x + player.width * 0.7 > p.x && player.x + player.width * 0.3 < p.x + p.w) {
           if (player.y + player.height >= p.y - 12 && player.y + player.height <= p.y + 20 && player.vy >= 0) {
             currentGround = Math.min(currentGround, p.y);
-          }
-        }
-      });
-
-      // 2. 斜坡滑梯高度判定
-      slopes.forEach(s => {
-        if (player.x + player.width * 0.5 >= s.x1 && player.x + player.width * 0.5 <= s.x2) {
-          const progress = (player.x + player.width * 0.5 - s.x1) / (s.x2 - s.x1);
-          const slopeY = s.y1 + progress * (s.y2 - s.y1);
-          if (player.y + player.height >= slopeY - 15 && player.y + player.height <= slopeY + 25 && player.vy >= 0) {
-            currentGround = Math.min(currentGround, slopeY);
           }
         }
       });
@@ -655,7 +668,7 @@
       // 終點判定
       if (player.x + player.width >= worldWidth - 400) {
         gameState = 'END';
-        finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>共收集了 <b>${smallCollectedCount}</b> 個筒筒！`;
+        finalScore.innerHTML = `恭喜你完成了偶像歷程巡演！<br>最終總得分：<b>${totalScore.toLocaleString()}</b> 分！`;
         endScreen.classList.remove('hidden');
       }
 
@@ -664,7 +677,7 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 碰撞檢測：Small (觸發 sound1.mp3)
+      // 碰撞檢測：Small (+100,000分)
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -673,14 +686,14 @@
               player.y < itemY + SMALL_BASE_WIDTH &&
               player.y + player.height > itemY) {
             c.collected = true;
-            smallCollectedCount += 1;
+            totalScore += 100000;
             updateScoreDisplay();
             playSound1();
           }
         }
       });
 
-      // 碰撞檢測：Big (觸發 sound2.mp3)
+      // 碰撞檢測：Big (+500,000分)
       eventNodes.forEach(e => {
         if (!e.collected) {
           const bigH = BIG_BASE_WIDTH * 1.2;
@@ -693,7 +706,8 @@
             
             e.collected = true;
             e.triggered = true;
-            bigCollectedCount += 1;
+            totalScore += 500000;
+            updateScoreDisplay();
             playSound2();
 
             gameState = 'PAUSED';
@@ -705,30 +719,54 @@
       });
     }
 
-    // 繪製
+    // 畫面繪製
     function draw() {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // 地平線
+      // 1. 畫主地平線與凹字弧形谷
       ctx.strokeStyle = '#ff2a74';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(0, GROUND_Y);
-      ctx.lineTo(worldWidth, GROUND_Y);
+
+      let currX = 0;
+      while (currX < worldWidth) {
+        let inValley = false;
+        for (let uv of uValleys) {
+          if (currX >= uv.x && currX <= uv.x + uv.w) {
+            inValley = true;
+            ctx.lineTo(uv.x, GROUND_Y);
+            // 繪製順暢弧線
+            ctx.quadraticCurveTo(
+              uv.x + uv.w / 2, GROUND_Y + uv.depth * 2,
+              uv.x + uv.w, GROUND_Y
+            );
+            currX = uv.x + uv.w;
+            break;
+          }
+        }
+        if (!inValley) {
+          currX += 100;
+          ctx.lineTo(Math.min(currX, worldWidth), GROUND_Y);
+        }
+      }
       ctx.stroke();
 
-      // 畫實體樓梯/高台
+      // 2. 畫淺藍色階梯與高台（無黃色邊框）
       platforms.forEach(p => {
-        ctx.fillStyle = 'rgba(255, 42, 116, 0.35)';
-        ctx.strokeStyle = '#ff758c';
-        ctx.lineWidth = 2;
+        // 淺藍色半透明填充
+        ctx.fillStyle = 'rgba(135, 206, 250, 0.35)';
         ctx.fillRect(p.x, p.y, p.w, p.h);
+
+        // 淺藍色邊框與頂部亮線
+        ctx.strokeStyle = '#87cefa';
+        ctx.lineWidth = 2;
         ctx.strokeRect(p.x, p.y, p.w, p.h);
 
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = '#e0f7fa';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
@@ -736,27 +774,7 @@
         ctx.stroke();
       });
 
-      // 畫滑坡/斜坡
-      slopes.forEach(s => {
-        ctx.beginPath();
-        ctx.moveTo(s.x1, s.y1);
-        ctx.lineTo(s.x2, s.y2);
-        ctx.lineTo(s.x2, GROUND_Y);
-        ctx.lineTo(s.x1, GROUND_Y);
-        ctx.closePath();
-        
-        ctx.fillStyle = 'rgba(255, 42, 116, 0.25)';
-        ctx.fill();
-
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(s.x1, s.y1);
-        ctx.lineTo(s.x2, s.y2);
-        ctx.stroke();
-      });
-
-      // 畫 Big 展區
+      // 3. 畫 Big 展區
       eventNodes.forEach(e => {
         if (!e.collected) {
           if (imgBig.complete && imgBig.naturalWidth > 0) {
@@ -765,13 +783,13 @@
             const drawH = drawW * aspect;
             ctx.drawImage(imgBig, e.x - drawW/2, GROUND_Y - e.yOffset - drawH, drawW, drawH);
           } else {
-            ctx.fillStyle = '#ffd700';
+            ctx.fillStyle = '#87cefa';
             ctx.fillRect(e.x - 30, GROUND_Y - e.yOffset - 90, 60, 90);
           }
         }
       });
 
-      // 畫 Small 筒筒
+      // 4. 畫 Small 筒筒 (已修正不沉入地平線)
       collectibles.forEach(c => {
         if (!c.collected) {
           const itemY = GROUND_Y - c.yOffset;
@@ -789,7 +807,7 @@
         }
       });
 
-      // 畫玩家（和緩搖晃）
+      // 5. 畫玩家
       const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
       ctx.save();
       
@@ -798,7 +816,7 @@
       ctx.translate(centerX, centerY);
 
       if (player.vx !== 0 && player.isGrounded) {
-        const angle = Math.sin(player.walkTimer) * 0.2; // 角度調小，搖晃更放慢平緩
+        const angle = Math.sin(player.walkTimer) * 0.2;
         ctx.rotate(angle);
       }
 
