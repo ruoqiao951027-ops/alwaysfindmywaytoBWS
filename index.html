@@ -2,1049 +2,394 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>佑錫花路旅程</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>筒筒's Library</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #3D2E24;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #game-wrapper {
-      position: relative;
+    body {
       width: 100vw;
-      height: 56.25vw;
-      max-height: 100vh;
-      max-width: 177.78vh;
-      background: #E2D5C7;
-      overflow: hidden;
-      box-shadow: 0 0 25px rgba(0,0,0,0.4);
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* 計分板：純文字無外框 */
-    #score-badge {
-      position: absolute;
-      top: calc(75px + env(safe-area-inset-top));
-      left: 20px;
-      z-index: 60;
-      color: #3D2E24;
-      font-size: 1.05rem;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      line-height: 1.2;
-      background: none;
-      border: none;
-      padding: 0;
-      box-shadow: none;
-    }
-
-    @media (orientation: portrait) {
-      #game-wrapper::after {
-        content: "📱 請將手機旋轉至橫向以獲得最佳體驗";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(226, 213, 199, 0.98);
-        color: #3D2E24;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        font-size: 1.2rem;
-        z-index: 100;
-        padding: 20px;
-        box-sizing: border-box;
-      }
-    }
-
-    .screen-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(45, 32, 23, 0.75);
+      height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+
+      /* 背景圖片設定 */
+      background-image: url('bgmain.png'); 
+      background-size: cover;          
+      background-position: center;     
+      background-repeat: no-repeat;   
+      
+      font-family: Arial, sans-serif;
       color: #fff;
-      z-index: 30;
-      text-align: center;
-      padding: 10px;
+      overflow: hidden;
+      position: relative;
     }
 
-    #start-screen {
+    /* 1. Splash Screen 待機畫面 */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 80px;
+      z-index: 10;
+      cursor: pointer;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    /* 進度條總容器：定位於中央偏下 (top: 65%) */
+    .progress-container {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 進度條上方的標題 */
+    .splash-title-text {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ff2a74;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px rgba(255, 42, 116, 0.9), 0 2px 5px rgba(0,0,0,0.8);
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+
+    /* 進度條軌道：加粗至 32px */
+    .progress-track {
+      position: relative;
+      width: 100%;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      overflow: visible; /* 確保超大手指不被裁切 */
+      backdrop-filter: blur(2px);
+    }
+
+    /* 進度條本體 */
+    .progress-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff758c, #ff2a74);
+      border-radius: 16px;
+      transition: width 0.1s linear;
+    }
+
+    /* 手指圖示：200px 定位 */
+    .finger-icon {
+      position: absolute;
+      right: -100px; /* 推至寬度一半 (200px / 2) */
+      top: 50%;
+      width: 200px;
+      height: 200px;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+      
+      /* 1.5秒跳動動畫 (-15deg ↔ +15deg) */
+      -webkit-animation: fingerJump 1.5s infinite steps(1);
+      animation: fingerJump 1.5s infinite steps(1);
+    }
+
+    /* 手指兩角度瞬間跳動 Keyframes */
+    @-webkit-keyframes fingerJump {
+      0% {
+        transform: translateY(-50%) rotate(-15deg);
+      }
+      50% {
+        transform: translateY(-50%) rotate(15deg);
+      }
+    }
+
+    @keyframes fingerJump {
+      0% {
+        transform: translateY(-50%) rotate(-15deg);
+      }
+      50% {
+        transform: translateY(-50%) rotate(15deg);
+      }
+    }
+
+    /* 進度條下方的點擊提示文字 */
+    .splash-click-hint {
+      margin-top: 25px;
+      font-size: 1.1rem;
+      color: #ff758c;
+      text-shadow: 0 0 10px rgba(255, 117, 140, 0.8), 0 2px 4px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      white-space: nowrap;
+    }
+
+    .splash-click-hint.show {
+      opacity: 1;
+    }
+
+    /* 2. 介紹文字畫面 */
+    #intro-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 20, 0.6);
+      display: flex;
+      flex-direction: column;
       justify-content: center;
-      padding-top: 30px; 
+      align-items: center;
+      z-index: 8;
+      cursor: pointer;
+      padding: 20px;
+      text-align: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .intro-text {
+      font-size: 1.3rem;
+      line-height: 1.8;
+      color: #fff;
+      max-width: 500px;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .intro-text.slide-up {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .click-hint {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #ff758c;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .click-hint.show {
+      opacity: 1;
+    }
+
+    /* 3. 主選單 (純三個按鈕，無框無標題) */
+    .main-menu {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+
+    .main-menu.pop-up {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .menu-btn {
+      padding: 15px 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(45deg, #ff2a74, #ff758c);
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 42, 116, 0.4);
+      display: inline-block;
+    }
+
+    .menu-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(255, 42, 116, 0.6);
+    }
+
+    .menu-btn.disabled {
+      background: #555;
+      color: #aaa;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .menu-btn.disabled:hover {
+      transform: none;
+    }
+
+    .fade-out {
+      opacity: 0 !important;
+      visibility: hidden !important;
     }
 
     .hidden {
       display: none !important;
     }
-
-    h1 {
-      font-size: 1.6rem;
-      color: #FF6B81;
-      margin-bottom: 12px;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    }
-
-    p.intro-text {
-      font-size: 0.92rem;
-      line-height: 1.6;
-      margin-bottom: 20px;
-      max-width: 520px;
-      text-align: center;
-      color: #FFF8F5;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-    }
-
-    #final-score {
-      font-size: 1.05rem;
-      line-height: 1.8;
-      text-align: center;
-      color: #FFF8F5;
-      margin: 15px 0;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    .btn {
-      padding: 10px 24px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      color: #fff;
-      background: linear-gradient(45deg, #E88D67, #FF6B81);
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(232, 141, 103, 0.5);
-      white-space: nowrap;
-    }
-
-    .btn-secondary {
-      background: linear-gradient(45deg, #8C6D58, #A3826C);
-      box-shadow: 0 4px 12px rgba(140, 109, 88, 0.5);
-    }
-
-    #start-btn {
-      animation: pulse 1.4s infinite alternate ease-in-out;
-    }
-
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        box-shadow: 0 0 10px rgba(255, 107, 129, 0.5);
-      }
-      100% {
-        transform: scale(1.08);
-        box-shadow: 0 0 22px rgba(255, 107, 129, 0.9);
-      }
-    }
-
-    .btn:active {
-      transform: scale(0.95);
-    }
-
-    .controls {
-      position: absolute;
-      bottom: 20px;
-      left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      padding: 0 25px;
-      padding-bottom: env(safe-area-inset-bottom);
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 20px;
-      align-items: flex-end;
-      pointer-events: auto;
-    }
-
-    .arrow-container {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .arrow-label {
-      position: absolute;
-      top: 42px;
-      font-size: 1.2rem;
-      color: #FFFFFF;
-      opacity: 0.65;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-      font-weight: bold;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    #label-left { left: 38px; }
-    #label-right { right: 38px; }
-
-    .arrow-btn {
-      width: 105px;
-      height: 105px;
-      object-fit: contain;
-      cursor: pointer;
-      opacity: 0.75;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-      transition: opacity 0.2s;
-    }
-
-    .arrow-btn:active { opacity: 0.95; }
-    #btn-left { transform: scaleX(-1); }
-    #btn-left:active { transform: scaleX(-1) scale(0.92); }
-    #btn-right:active { transform: scale(0.92); }
-
-    .jump-btn {
-      width: 105px;
-      height: 105px;
-      object-fit: contain;
-      cursor: pointer;
-      opacity: 0.75;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-      transition: opacity 0.2s;
-    }
-
-    .jump-btn:active {
-      opacity: 0.95;
-      transform: scale(0.92);
-    }
-
-    /* 大事件彈窗：窄面板 */
-    #event-modal {
-      position: relative;
-      background: rgba(250, 245, 240, 0.98);
-      border: 2px solid #8C6D58;
-      border-radius: 16px;
-      width: 55%;
-      max-width: 290px;
-      max-height: 80vh;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      overflow: visible;
-      color: #3D2E24;
-    }
-
-    #event-title {
-      color: #C0392B;
-      font-size: 1.05rem;
-      margin-bottom: 5px;
-      text-align: center;
-    }
-
-    #event-image {
-      width: 100%;
-      max-height: 160px;
-      object-fit: contain;
-      border-radius: 6px;
-      margin-top: 8px;
-      border: none;
-      background: transparent;
-    }
-
-    #close-event-btn {
-      position: absolute;
-      right: -115px;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 10px 16px;
-    }
-
-    #close-event-btn:active {
-      transform: translateY(-50%) scale(0.95);
-    }
   </style>
 </head>
 <body>
 
-  <audio id="game-bgm" src="game.mp3" loop preload="auto"></audio>
-  <audio id="sound1" src="sound1.mp3" preload="auto"></audio>
-  <audio id="sound2" src="sound2.mp3" preload="auto"></audio>
-  <audio id="sound2-dup" src="sound2.mp3" preload="auto"></audio> <!-- 輔助放大 sound2 音量用 -->
-  <audio id="sound-end1" src="end1.mp3" preload="auto"></audio>
-  <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
-
-  <div id="game-wrapper">
-    <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0</span></div>
-
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
-
-    <div class="controls">
-      <div class="btn-group">
-        <div class="arrow-container">
-          <div class="arrow-label" id="label-left">◄</div>
-          <img src="arrow.webp" class="arrow-btn" id="btn-left" alt="向左">
-        </div>
-        <div class="arrow-container">
-          <div class="arrow-label" id="label-right">►</div>
-          <img src="arrow.webp" class="arrow-btn" id="btn-right" alt="向右">
+  <!-- 1. Splash Screen 待機畫面 (上方標題 + 進度條與手指 + 下方提示) -->
+  <div id="splash-screen">
+    <div class="progress-container">
+      <div class="splash-title-text">筒筒's Library</div>
+      <div class="progress-track">
+        <div id="progress-bar" class="progress-bar">
+          <img src="finger.png" alt="finger" class="finger-icon">
         </div>
       </div>
-      <div class="btn-group">
-        <img src="jump.webp" class="jump-btn" id="btn-jump" alt="跳躍">
-      </div>
+      <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨</div>
+    </div>
+  </div>
+
+  <!-- 2. 兩段介紹文字畫面 -->
+  <div id="intro-screen" class="hidden">
+    <div id="intro-1" class="intro-text">
+      因為佑錫<br>
+      這個夏天筒筒們都很狂熱<br>
+      有沒有參加見面會呢?<br>
+      是怎樣的情景呢?<br>
+      相信筒筒們會有聊不完的話題<br>
+    </div>
+    
+    <div id="intro-2" class="intro-text">
+      今年再次舉辦了邊邊生咖<br>
+      歡迎筒筒們前來<br>
+      不管是新入坑還是愛了邊邊兩年的筒筒<br>
+      讓我們同聚<br>
+      為最帥的圖書館員慶祝生日吧<br>
+      準備好一起重溫這些珍貴的歷程!<br>
     </div>
 
-    <!-- 開始畫面 -->
-    <div id="start-screen" class="screen-overlay">
-      <h1>佑錫花路旅程</h1>
-      <p class="intro-text">
-        歡迎來到佑錫的回顧之旅!<br>
-        讓我們隨著佑錫的腳步一起回首這些年的點點滴滴~<br>
-        ❤️<br>
-        ●使用左右箭頭控制前進與後退、右下按鈕來跳躍<br>
-        ●努力收集筒筒與狗狗，解鎖隱藏結局，陪伴佑錫步上花路🌸
-      </p>
-      <button class="btn" id="start-btn">開始旅程</button>
-    </div>
+    <div id="click-hint" class="click-hint">✨ 點擊任意處繼續 ✨</div>
+  </div>
 
-    <!-- 大事件彈窗 -->
-    <div id="event-screen" class="screen-overlay hidden">
-      <div id="event-modal">
-        <h2 id="event-title">大事件標題</h2>
-        <img id="event-image" src="1.webp" alt="事件照片">
-        <button class="btn" id="close-event-btn">繼續前進</button>
-      </div>
-    </div>
+  <!-- 主畫面背景音樂 -->
+  <audio id="main-bgm" src="main.mp3" loop></audio>
 
-    <!-- 結算畫面 -->
-    <div id="end-screen" class="screen-overlay hidden">
-      <h1 id="end-title">🎉結局標題</h1>
-      <p id="final-score">結局文字內容</p>
-      <div class="btn-row">
-        <button class="btn" id="restart-btn">再次回顧</button>
-        <button class="btn btn-secondary" id="back-library-btn">回到圖書館</button>
-      </div>
+  <!-- 3. 主選單 (僅保留三個按鈕) -->
+  <div id="main-menu" class="main-menu">
+    <div class="btn-container">
+      <a href="game1.html" class="menu-btn"> 佑錫回顧小遊戲 </a>
+      <button class="menu-btn disabled" disabled> 生咖地址&應援小禮 </button>
+      <button class="menu-btn disabled" disabled> 生咖會場瞧一眼 </button>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    const splashScreen = document.getElementById('splash-screen');
+    const progressBar = document.getElementById('progress-bar');
+    const splashClickHint = document.getElementById('splash-click-hint');
+    const introScreen = document.getElementById('intro-screen');
+    const intro1 = document.getElementById('intro-1');
+    const intro2 = document.getElementById('intro-2');
+    const clickHint = document.getElementById('click-hint');
+    const mainMenu = document.getElementById('main-menu');
+    const mainBgm = document.getElementById('main-bgm');
 
-    const CANVAS_WIDTH = 800;
-    const CANVAS_HEIGHT = 450;
-    const GROUND_Y = Math.round(CANVAS_HEIGHT * 0.68);
+    mainBgm.volume = 0.5;
 
-    const gameBgm = document.getElementById('game-bgm');
-    const sfxSound1 = document.getElementById('sound1');
-    const sfxSound2 = document.getElementById('sound2');
-    const sfxSound2Dup = document.getElementById('sound2-dup');
-    const sfxEnd1 = document.getElementById('end1');
-    const sfxEnd2 = document.getElementById('end2');
-
-    const DEFAULT_BGM_VOLUME = 0.15; // 調整成比較小聲
-    const LOW_BGM_VOLUME = 0.04;
-
-    gameBgm.volume = DEFAULT_BGM_VOLUME;
-    let musicStarted = false;
-
+    // 解除瀏覽器自動播放限制
     function initAudio() {
-      if (!musicStarted) {
-        gameBgm.play().then(() => {
-          musicStarted = true;
-        }).catch(() => {});
-      }
+      mainBgm.play().then(() => {
+        document.removeEventListener('click', initAudio);
+        document.removeEventListener('touchstart', initAudio);
+      }).catch(err => {
+        console.log("等待使用者點擊以播放音樂...");
+      });
     }
+    document.addEventListener('click', initAudio);
+    document.addEventListener('touchstart', initAudio);
 
-    function playSound1() {
-      try {
-        sfxSound1.currentTime = 0;
-        sfxSound1.volume = 0.8;
-        sfxSound1.play().catch(() => {});
-      } catch (e) {}
-    }
-
-    function playSound2() {
-      try {
-        // 同時播放兩個音訊來達到音量放大的效果 (約 5 倍立體疊加)
-        sfxSound2.currentTime = 0;
-        sfxSound2.volume = 1.0;
-        sfxSound2.play().catch(() => {});
-
-        sfxSound2Dup.currentTime = 0;
-        sfxSound2Dup.volume = 1.0;
-        sfxSound2Dup.play().catch(() => {});
-      } catch (e) {}
-    }
-
-    function playEndSound(isPerfect) {
-      gameBgm.volume = LOW_BGM_VOLUME;
-
-      if (isPerfect) {
-        sfxEnd2.currentTime = 0;
-        sfxEnd2.volume = 1.0;
-        sfxEnd2.play().catch(() => {});
-      } else {
-        sfxEnd1.currentTime = 0;
-        sfxEnd1.volume = 1.0;
-        sfxEnd1.play().catch(() => {});
-      }
-    }
-
-    window.addEventListener('click', initAudio, { once: true });
-    window.addEventListener('touchstart', initAudio, { once: true });
-
-    const images = {};
-    function loadImage(key, src) {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => { images[key] = true; };
-      img.onerror = () => { images[key] = false; };
-      return img;
-    }
-
-    const imgSmall = loadImage('small', 'small.webp');
-    const imgBig = loadImage('big', 'big.webp');
-    const imgCake = loadImage('cake', 'cake.webp');
-    const imgRunRight = loadImage('runRight', 'runright.webp');
-    const imgRunLeft = loadImage('runLeft', 'runleft.webp');
-
-    const startScreen = document.getElementById('start-screen');
-    const eventScreen = document.getElementById('event-screen');
-    const endScreen = document.getElementById('end-screen');
-    const eventTitle = document.getElementById('event-title');
-    const eventImage = document.getElementById('event-image');
-    const finalScore = document.getElementById('final-score');
-    const endTitle = document.getElementById('end-title');
-    const totalScoreEl = document.getElementById('total-score');
-
-    let gameState = 'START';
-    let collectedSmallCount = 0;
-    let totalScore = 0;
-    let cameraX = 0;
-    let worldWidth = 28000;
-
-    const player = {
-      x: 100,
-      y: GROUND_Y - 138,
-      width: 110,
-      height: 138,
-      vx: 0,
-      vy: 0,
-      speed: 6.0,
-      jumpPower: -12.5,
-      gravity: 0.62,
-      isGrounded: false,
-      facing: 'right',
-      walkTimer: 0
-    };
-
-    const SMALL_BASE_WIDTH = 50;
-    const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 165;
-
-    const eventTitles = [
-      '2010年模特兒出道',
-      '2015年首次米蘭伸展台',
-      '2016演員出道',
-      '8年無名時期',
-      '2024善宰大放異彩,首次亞洲巡迴見面會',
-      '2024潑髒水事件',
-      '2025成立Fan Club',
-      '2024-2026廣告寵兒',
-      '2026 大君來了',
-      '2026亞洲巡迴萬人見面會'
-    ];
-
-    let collectibles = [];
-    let eventNodes = [];
-    let platforms = [];
-    let curvedTerrains = [];
-    let slopes = [];
-    let cakeObject = null;
-
-    function getGroundYAt(x) {
-      let ground = GROUND_Y;
+    // 模擬資源載入進度條跑動
+    let progress = 0;
+    const loadingInterval = setInterval(() => {
+      progress += Math.floor(Math.random() * 12) + 5;
       
-      curvedTerrains.forEach(ct => {
-        if (x >= ct.x && x <= ct.x + ct.w) {
-          const norm = (x - ct.x) / ct.w;
-          const curveVal = Math.sin(norm * Math.PI) * ct.height;
-          if (ct.type === 'concave') ground = GROUND_Y + curveVal;
-          else if (ct.type === 'convex') ground = GROUND_Y - curveVal;
-        }
-      });
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(loadingInterval);
+        
+        // 進度條跑完後顯示「✨ 點擊任意處繼續 ✨」
+        splashClickHint.classList.add('show');
 
-      slopes.forEach(s => {
-        if (x >= s.x1 && x <= s.x2) {
-          const progress = (x - s.x1) / (s.x2 - s.x1);
-          const slopeY = s.y1 + progress * (s.y2 - s.y1);
-          if (slopeY < ground) {
-            ground = slopeY;
-          }
-        }
-      });
+        splashScreen.addEventListener('click', handleSplashClick);
+        splashScreen.addEventListener('touchstart', handleSplashClick);
+      }
+      
+      progressBar.style.width = progress + '%';
+    }, 120);
 
-      platforms.forEach(p => {
-        if (x >= p.x && x <= p.x + p.w) {
-          if (p.y < ground) {
-            ground = p.y;
-          }
-        }
-      });
+    // 階段 1：點擊 Splash Screen
+    function handleSplashClick() {
+      mainBgm.play().catch(err => console.log(err));
 
-      return ground;
+      splashScreen.classList.add('fade-out');
+      introScreen.classList.remove('hidden');
+
+      setTimeout(() => {
+        intro1.classList.add('slide-up');
+      }, 300);
+
+      setTimeout(() => {
+        intro2.classList.add('slide-up');
+        clickHint.classList.add('show');
+
+        introScreen.addEventListener('click', handleIntroClick);
+        introScreen.addEventListener('touchstart', handleIntroClick);
+      }, 2300);
+
+      splashScreen.removeEventListener('click', handleSplashClick);
+      splashScreen.removeEventListener('touchstart', handleSplashClick);
     }
 
-    function addSmallItemDirect(x, offsetHeight) {
-      const surfaceY = getGroundYAt(x + SMALL_BASE_WIDTH / 2);
-      const finalY = surfaceY - SMALL_BASE_WIDTH - offsetHeight;
-      collectibles.push({ x: x, y: finalY, collected: false });
+    // 階段 2：點擊介紹文字畫面
+    function handleIntroClick() {
+      introScreen.classList.add('fade-out');
+
+      setTimeout(() => {
+        mainMenu.classList.add('pop-up');
+      }, 300);
+
+      introScreen.removeEventListener('click', handleIntroClick);
+      introScreen.removeEventListener('touchstart', handleIntroClick);
     }
-
-    function generateLevelData() {
-      collectibles = [];
-      eventNodes = [];
-      platforms = [];
-      curvedTerrains = [];
-      slopes = [];
-
-      let currentX = 250;
-
-      for (let i = 0; i < 5; i++) {
-        const offset = (i % 2 === 1) ? 25 : 10;
-        addSmallItemDirect(currentX, offset);
-        currentX += 150;
-      }
-
-      currentX += 100;
-
-      for (let b = 0; b < 10; b++) {
-        let bigYOffset = 100;
-        if (b === 1) bigYOffset = 110;
-        else if (b === 2) bigYOffset = 60;
-        else if (b % 5 === 2) bigYOffset = 70;
-        else if (b % 5 === 4) bigYOffset = 110;
-
-        let bigX = currentX + 350;
-
-        eventNodes.push({
-          x: bigX, yOffset: bigYOffset,
-          title: eventTitles[b], imgIndex: b + 1,
-          triggered: false, collected: false
-        });
-
-        const layoutType = b % 7;
-
-        if (layoutType === 0) {
-          platforms.push({ x: currentX, y: GROUND_Y - 30, w: 70, h: 30 });
-          platforms.push({ x: currentX + 60, y: GROUND_Y - 60, w: 70, h: 60 });
-          platforms.push({ x: currentX + 120, y: GROUND_Y - 90, w: 80, h: 90 });
-          currentX += 260;
-        } else if (layoutType === 1) {
-          platforms.push({ x: currentX, y: GROUND_Y - 90, w: 80, h: 90 });
-          platforms.push({ x: currentX + 70, y: GROUND_Y - 60, w: 70, h: 60 });
-          platforms.push({ x: currentX + 130, y: GROUND_Y - 30, w: 70, h: 30 });
-          currentX += 250;
-        } else if (layoutType === 2) {
-          slopes.push({ x1: currentX, y1: GROUND_Y - 90, x2: currentX + 220, y2: GROUND_Y });
-          platforms.push({ x: currentX, y: GROUND_Y - 90, w: 60, h: 90 });
-          currentX += 260;
-        } else if (layoutType === 3) {
-          platforms.push({ x: currentX, y: GROUND_Y - 40, w: 60, h: 40 });
-          platforms.push({ x: currentX + 90, y: GROUND_Y - 80, w: 65, h: 20 });
-          platforms.push({ x: currentX + 185, y: GROUND_Y - 120, w: 65, h: 20 });
-          currentX += 300;
-        } else if (layoutType === 4) {
-          platforms.push({ x: currentX, y: GROUND_Y - 60, w: 70, h: 60 });
-          curvedTerrains.push({ x: currentX + 60, w: 200, height: 50, type: 'concave' });
-          platforms.push({ x: currentX + 250, y: GROUND_Y - 60, w: 80, h: 60 });
-          currentX += 350;
-        } else if (layoutType === 5) {
-          curvedTerrains.push({ x: currentX, w: 240, height: 45, type: 'concave' });
-          currentX += 260;
-        } else {
-          curvedTerrains.push({ x: currentX, w: 240, height: 40, type: 'convex' });
-          currentX += 260;
-        }
-
-        platforms.push({
-          x: eventNodes[b].x - 65,
-          y: GROUND_Y - eventNodes[b].yOffset,
-          w: 130,
-          h: eventNodes[b].yOffset
-        });
-
-        currentX = eventNodes[b].x + 200;
-
-        if (b < 9) {
-          for (let s = 0; s < 10; s++) {
-            const isHigh = (s % 2 === 1);
-            if (s === 3 || s === 7) {
-              const pY = isHigh ? GROUND_Y - 60 : GROUND_Y - 30;
-              platforms.push({ x: currentX - 15, y: pY, w: 70, h: isHigh ? 60 : 30 });
-            }
-            const offsetHeight = isHigh ? 25 : 10;
-            addSmallItemDirect(currentX, offsetHeight);
-            currentX += 140;
-          }
-        }
-      }
-
-      currentX = eventNodes[9].x + 250;
-      for (let i = 0; i < 5; i++) {
-        const offset = (i % 2 === 1) ? 25 : 10;
-        addSmallItemDirect(currentX, offset);
-        currentX += 150;
-      }
-
-      const cakeX = currentX + 220;
-      cakeObject = {
-        x: cakeX,
-        w: CAKE_BASE_WIDTH,
-        triggered: false
-      };
-
-      worldWidth = cakeX + 600;
-    }
-
-    const keys = { left: false, right: false, jump: false };
-
-    window.addEventListener('keydown', (e) => {
-      initAudio();
-      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
-      if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && player.isGrounded && gameState === 'PLAYING') {
-        player.vy = player.jumpPower;
-        player.isGrounded = false;
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
-    });
-
-    const setupTouchBtn = (elementId, keyName) => {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      const start = (e) => { e.preventDefault(); initAudio(); keys[keyName] = true; };
-      const end = (e) => { e.preventDefault(); keys[keyName] = false; };
-      el.addEventListener('touchstart', start);
-      el.addEventListener('touchend', end);
-      el.addEventListener('mousedown', start);
-      el.addEventListener('mouseup', end);
-    };
-
-    setupTouchBtn('btn-left', 'left');
-    setupTouchBtn('btn-right', 'right');
-
-    const jumpBtn = document.getElementById('btn-jump');
-    if (jumpBtn) {
-      const triggerJump = (e) => {
-        if (e) e.preventDefault();
-        initAudio();
-        if (player.isGrounded && gameState === 'PLAYING') {
-          player.vy = player.jumpPower;
-          player.isGrounded = false;
-        }
-      };
-      jumpBtn.addEventListener('touchstart', triggerJump);
-      jumpBtn.addEventListener('mousedown', triggerJump);
-    }
-
-    document.getElementById('start-btn').addEventListener('click', () => {
-      initAudio();
-      startScreen.classList.add('hidden');
-      resetGame();
-      gameState = 'PLAYING';
-    });
-
-    document.getElementById('close-event-btn').addEventListener('click', () => {
-      eventScreen.classList.add('hidden');
-      gameState = 'PLAYING';
-    });
-
-    document.getElementById('restart-btn').addEventListener('click', () => {
-      gameBgm.volume = DEFAULT_BGM_VOLUME;
-      resetGame();
-      endScreen.classList.add('hidden');
-      if (musicStarted) gameBgm.play().catch(() => {});
-      gameState = 'PLAYING';
-    });
-
-    document.getElementById('back-library-btn').addEventListener('click', () => {
-      if (window.parent && window.parent !== window) {
-        if (typeof window.parent.backToLibrary === 'function') {
-          window.parent.backToLibrary();
-          return;
-        }
-        if (window.parent.history.length > 1) {
-          window.parent.history.back();
-          return;
-        }
-      }
-
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'index.html';
-      }
-    });
-
-    function updateScoreDisplay() {
-      totalScoreEl.innerText = totalScore.toLocaleString();
-    }
-
-    function resetGame() {
-      collectedSmallCount = 0;
-      totalScore = 0;
-      updateScoreDisplay();
-
-      generateLevelData();
-
-      player.x = 100;
-      player.y = GROUND_Y - player.height;
-      player.vx = 0;
-      player.vy = 0;
-      player.walkTimer = 0;
-      cameraX = 0;
-    }
-
-    function update() {
-      if (gameState !== 'PLAYING') return;
-
-      if (keys.left) {
-        player.vx = -player.speed;
-        player.facing = 'left';
-        player.walkTimer += 0.1;
-      } else if (keys.right) {
-        player.vx = player.speed;
-        player.facing = 'right';
-        player.walkTimer += 0.1;
-      } else {
-        player.vx = 0;
-        player.walkTimer = 0;
-      }
-
-      player.vy += player.gravity;
-
-      let nextX = player.x + player.vx;
-      const playerBottom = player.y + player.height;
-
-      platforms.forEach(p => {
-        if (playerBottom > p.y + 8 && player.y < p.y + p.h - 5) {
-          if (player.x + player.width <= p.x && nextX + player.width > p.x) {
-            nextX = p.x - player.width;
-          } else if (player.x >= p.x + p.w && nextX < p.x + p.w) {
-            nextX = p.x + p.w;
-          }
-        }
-      });
-
-      player.x = nextX;
-      player.y += player.vy;
-
-      let currentGround = GROUND_Y;
-      player.isGrounded = false;
-
-      const playerCenterX = player.x + player.width * 0.5;
-
-      curvedTerrains.forEach(ct => {
-        if (playerCenterX >= ct.x && playerCenterX <= ct.x + ct.w) {
-          const norm = (playerCenterX - ct.x) / ct.w;
-          const curveVal = Math.sin(norm * Math.PI) * ct.height;
-          if (ct.type === 'concave') {
-            currentGround = GROUND_Y + curveVal;
-          } else if (ct.type === 'convex') {
-            currentGround = GROUND_Y - curveVal;
-          }
-        }
-      });
-
-      slopes.forEach(s => {
-        if (playerCenterX >= s.x1 && playerCenterX <= s.x2) {
-          const progress = (playerCenterX - s.x1) / (s.x2 - s.x1);
-          const slopeY = s.y1 + progress * (s.y2 - s.y1);
-          currentGround = Math.min(currentGround, slopeY);
-        }
-      });
-
-      platforms.forEach(p => {
-        if (player.x + player.width * 0.75 > p.x && player.x + player.width * 0.25 < p.x + p.w) {
-          if (player.y + player.height >= p.y - 14 && player.y + player.height <= p.y + 25 && player.vy >= 0) {
-            currentGround = Math.min(currentGround, p.y);
-          }
-        }
-      });
-
-      if (player.y + player.height >= currentGround) {
-        player.y = currentGround - player.height;
-        player.vy = 0;
-        player.isGrounded = true;
-      }
-
-      if (player.x < 0) player.x = 0;
-
-      if (cakeObject && !cakeObject.triggered) {
-        let cakeH = CAKE_BASE_WIDTH;
-        if (imgCake.complete && imgCake.naturalWidth > 0) {
-          cakeH = CAKE_BASE_WIDTH * (imgCake.naturalHeight / imgCake.naturalWidth);
-        }
-        const cakeY = GROUND_Y - cakeH;
-
-        if (player.x < cakeObject.x + cakeObject.w &&
-            player.x + player.width > cakeObject.x &&
-            player.y < cakeY + cakeH &&
-            player.y + player.height > cakeY) {
-
-          cakeObject.triggered = true;
-          gameState = 'END';
-
-          const allSmallCollected = (collectedSmallCount === 100);
-          const allBigCollected = eventNodes.every(e => e.collected);
-          const isPerfectEnd = allSmallCollected && allBigCollected;
-
-          playEndSound(isPerfectEnd);
-
-          if (isPerfectEnd) {
-            endTitle.innerText = "🎉隱藏結局";
-            finalScore.innerHTML = `一路擄獲了∞個筒筒的心❤️‍🔥<br>我會陪你走到世界上的每個舞台、每處帷幕<br>以後也一直、一直陪著佑錫走花路吧！`;
-          } else {
-            endTitle.innerText = "🎉幸福結局";
-            finalScore.innerHTML = `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
-          }
-
-          endScreen.classList.remove('hidden');
-        }
-      }
-
-      cameraX = player.x - CANVAS_WIDTH / 3;
-      if (cameraX < 0) cameraX = 0;
-      if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
-
-      collectibles.forEach(c => {
-        if (!c.collected) {
-          if (player.x < c.x + SMALL_BASE_WIDTH &&
-              player.x + player.width > c.x &&
-              player.y < c.y + SMALL_BASE_WIDTH &&
-              player.y + player.height > c.y) {
-            c.collected = true;
-            collectedSmallCount++;
-            totalScore += 100000;
-            updateScoreDisplay();
-            playSound1();
-          }
-        }
-      });
-
-      eventNodes.forEach(e => {
-        if (!e.collected) {
-          const bigH = BIG_BASE_WIDTH * 1.2;
-          const bigY = GROUND_Y - e.yOffset - bigH;
-          const hitW = BIG_BASE_WIDTH * 0.5;
-          const hitX = e.x - hitW / 2;
-
-          if (player.x < hitX + hitW &&
-              player.x + player.width > hitX &&
-              player.y < bigY + bigH &&
-              player.y + player.height > bigY + 20) {
-
-            e.collected = true;
-            e.triggered = true;
-            totalScore += 500000;
-            updateScoreDisplay();
-            playSound2();
-
-            gameState = 'PAUSED';
-            eventTitle.innerText = e.title;
-            eventImage.src = `${e.imgIndex}.webp`; // 改為 webp
-            eventScreen.classList.remove('hidden');
-          }
-        }
-      });
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-      ctx.save();
-      ctx.translate(-cameraX, 0);
-
-      ctx.strokeStyle = '#8C6D58';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-
-      let stepX = 10;
-      ctx.moveTo(0, GROUND_Y);
-      for (let px = 0; px <= worldWidth; px += stepX) {
-        let py = GROUND_Y;
-
-        for (let ct of curvedTerrains) {
-          if (px >= ct.x && px <= ct.x + ct.w) {
-            const norm = (px - ct.x) / ct.w;
-            const curveVal = Math.sin(norm * Math.PI) * ct.height;
-            py = ct.type === 'concave' ? GROUND_Y + curveVal : GROUND_Y - curveVal;
-            break;
-          }
-        }
-
-        for (let s of slopes) {
-          if (px >= s.x1 && px <= s.x2) {
-            const progress = (px - s.x1) / (s.x2 - s.x1);
-            py = s.y1 + progress * (s.y2 - s.y1);
-            break;
-          }
-        }
-
-        ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-
-      slopes.forEach(s => {
-        ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
-        ctx.beginPath();
-        ctx.moveTo(s.x1, s.y1);
-        ctx.lineTo(s.x2, s.y2);
-        ctx.lineTo(s.x2, GROUND_Y + 50);
-        ctx.lineTo(s.x1, GROUND_Y + 50);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = '#8C6D58';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(s.x1, s.y1);
-        ctx.lineTo(s.x2, s.y2);
-        ctx.stroke();
-      });
-
-      platforms.forEach(p => {
-        ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
-        ctx.fillRect(p.x, p.y, p.w, p.h);
-
-        ctx.strokeStyle = '#8C6D58';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(p.x, p.y, p.w, p.h);
-
-        ctx.strokeStyle = '#FFF8F5';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.w, p.y);
-        ctx.stroke();
-      });
-
-      eventNodes.forEach(e => {
-        if (!e.collected) {
-          if (imgBig.complete && imgBig.naturalWidth > 0) {
-            const aspect = imgBig.naturalHeight / imgBig.naturalWidth;
-            const drawW = BIG_BASE_WIDTH;
-            const drawH = drawW * aspect;
-            ctx.drawImage(imgBig, e.x - drawW/2, GROUND_Y - e.yOffset - drawH, drawW, drawH);
-          } else {
-            ctx.fillStyle = '#E88D67';
-            ctx.fillRect(e.x - 30, GROUND_Y - e.yOffset - 90, 60, 90);
-          }
-        }
-      });
-
-      if (cakeObject) {
-        if (imgCake.complete && imgCake.naturalWidth > 0) {
-          const aspect = imgCake.naturalHeight / imgCake.naturalWidth;
-          const drawW = cakeObject.w;
-          const drawH = drawW * aspect;
-          ctx.drawImage(imgCake, cakeObject.x, GROUND_Y - drawH, drawW, drawH);
-        } else {
-          ctx.fillStyle = '#FF6B81';
-          ctx.fillRect(cakeObject.x, GROUND_Y - 180, cakeObject.w, 180);
-        }
-      }
-
-      collectibles.forEach(c => {
-        if (!c.collected) {
-          if (imgSmall.complete && imgSmall.naturalWidth > 0) {
-            const aspect = imgSmall.naturalHeight / imgSmall.naturalWidth;
-            const drawW = SMALL_BASE_WIDTH;
-            const drawH = drawW * aspect;
-            ctx.drawImage(imgSmall, c.x, c.y, drawW, drawH);
-          } else {
-            ctx.fillStyle = '#FF758c';
-            ctx.beginPath();
-            ctx.arc(c.x + 25, c.y + 25, 20, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      });
-
-      const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
-      ctx.save();
-
-      const centerX = player.x + player.width / 2;
-      const centerY = player.y + player.height / 2;
-      ctx.translate(centerX, centerY);
-
-      if (player.vx !== 0 && player.isGrounded) {
-        const angle = Math.sin(player.walkTimer) * 0.2;
-        ctx.rotate(angle);
-      }
-
-      if (curImg.complete && curImg.naturalWidth > 0) {
-        ctx.drawImage(curImg, -player.width / 2, -player.height / 2, player.width, player.height);
-      } else {
-        ctx.fillStyle = '#E88D67';
-        ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-      }
-      ctx.restore();
-
-      ctx.restore();
-    }
-
-    function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    generateLevelData();
-    gameLoop();
   </script>
+
 </body>
 </html>
