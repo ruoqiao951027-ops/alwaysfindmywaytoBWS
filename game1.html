@@ -441,9 +441,9 @@
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
-    // 背景照片採用 Lazy Loading（當主角靠近前 1000px 時才動態載入）
+    // 背景照片採用 Lazy Loading，總共 30 張 (bg1.webp ~ bg30.webp)，播完第30張後循環回到第1張
     const bgImages = {};
-    const BG_TOTAL_COUNT = 35; // 假設總共有 35 張背景圖
+    const BG_TOTAL_COUNT = 30; 
     
     function getOrLoadBgImage(index) {
       const bgIndex = (index % BG_TOTAL_COUNT) + 1;
@@ -918,7 +918,7 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // --- 繪製無縫銜接的背景照片 (Lazy Loading：主角前方 1000px 內才載入與繪製) ---
+      // --- 繪製無縫銜接的背景照片 (高度再高 15px，30張循環) ---
       let bgDrawX = 0;
       const bgOriginalW = 816;
       const bgOriginalH = 725;
@@ -926,13 +926,12 @@
       
       let imgSeqIndex = 0;
       for (let i = 0; i < worldWidth; i += bgOriginalW) {
-        // 如果該背景圖片距離主角小於 1000px 或已在畫面中，才進行載入
         if (bgDrawX + bgOriginalW >= player.x - lazyLoadDistance && bgDrawX <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
           const currentBgImg = getOrLoadBgImage(imgSeqIndex);
 
           if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
-            // 高度設定為從計分條下方到地平線(GROUND_Y)，並維持原始比例
-            const targetHeight = GROUND_Y - 75;
+            // 高度再增加 15px
+            const targetHeight = (GROUND_Y - 75) + 15;
             const drawH = targetHeight;
             const drawW = drawH * (bgOriginalW / bgOriginalH);
             const drawY = GROUND_Y - drawH;
