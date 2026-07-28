@@ -237,7 +237,6 @@
     #btn-left:active { transform: scaleX(-1) scale(0.92); }
     #btn-right:active { transform: scale(0.92); }
 
-    /* 跳躍按鈕圖片樣式（維持與左右按鈕一致的尺寸與風格） */
     .jump-btn {
       width: 105px;
       height: 105px;
@@ -307,6 +306,7 @@
   <audio id="game-bgm" src="game.mp3" loop preload="auto"></audio>
   <audio id="sound1" src="sound1.mp3" preload="auto"></audio>
   <audio id="sound2" src="sound2.mp3" preload="auto"></audio>
+  <audio id="sound2-dup" src="sound2.mp3" preload="auto"></audio> <!-- 輔助放大 sound2 音量用 -->
   <audio id="sound-end1" src="end1.mp3" preload="auto"></audio>
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
@@ -319,15 +319,15 @@
       <div class="btn-group">
         <div class="arrow-container">
           <div class="arrow-label" id="label-left">◄</div>
-          <img src="arrow.png" class="arrow-btn" id="btn-left" alt="向左">
+          <img src="arrow.webp" class="arrow-btn" id="btn-left" alt="向左">
         </div>
         <div class="arrow-container">
           <div class="arrow-label" id="label-right">►</div>
-          <img src="arrow.png" class="arrow-btn" id="btn-right" alt="向右">
+          <img src="arrow.webp" class="arrow-btn" id="btn-right" alt="向右">
         </div>
       </div>
       <div class="btn-group">
-        <img src="jump.png" class="jump-btn" id="btn-jump" alt="跳躍">
+        <img src="jump.webp" class="jump-btn" id="btn-jump" alt="跳躍">
       </div>
     </div>
 
@@ -348,7 +348,7 @@
     <div id="event-screen" class="screen-overlay hidden">
       <div id="event-modal">
         <h2 id="event-title">大事件標題</h2>
-        <img id="event-image" src="1.png" alt="事件照片">
+        <img id="event-image" src="1.webp" alt="事件照片">
         <button class="btn" id="close-event-btn">繼續前進</button>
       </div>
     </div>
@@ -375,11 +375,12 @@
     const gameBgm = document.getElementById('game-bgm');
     const sfxSound1 = document.getElementById('sound1');
     const sfxSound2 = document.getElementById('sound2');
-    const sfxEnd1 = document.getElementById('sound-end1');
-    const sfxEnd2 = document.getElementById('sound-end2');
+    const sfxSound2Dup = document.getElementById('sound2-dup');
+    const sfxEnd1 = document.getElementById('end1');
+    const sfxEnd2 = document.getElementById('end2');
 
-    const DEFAULT_BGM_VOLUME = 0.3;
-    const LOW_BGM_VOLUME = 0.08;
+    const DEFAULT_BGM_VOLUME = 0.15; // 調整成比較小聲
+    const LOW_BGM_VOLUME = 0.04;
 
     gameBgm.volume = DEFAULT_BGM_VOLUME;
     let musicStarted = false;
@@ -402,9 +403,14 @@
 
     function playSound2() {
       try {
+        // 同時播放兩個音訊來達到音量放大的效果 (約 5 倍立體疊加)
         sfxSound2.currentTime = 0;
         sfxSound2.volume = 1.0;
         sfxSound2.play().catch(() => {});
+
+        sfxSound2Dup.currentTime = 0;
+        sfxSound2Dup.volume = 1.0;
+        sfxSound2Dup.play().catch(() => {});
       } catch (e) {}
     }
 
@@ -434,11 +440,11 @@
       return img;
     }
 
-    const imgSmall = loadImage('small', 'small.png');
-    const imgBig = loadImage('big', 'big.png');
-    const imgCake = loadImage('cake', 'cake.png');
-    const imgRunRight = loadImage('runRight', 'runright.png');
-    const imgRunLeft = loadImage('runLeft', 'runleft.png');
+    const imgSmall = loadImage('small', 'small.webp');
+    const imgBig = loadImage('big', 'big.webp');
+    const imgCake = loadImage('cake', 'cake.webp');
+    const imgRunRight = loadImage('runRight', 'runright.webp');
+    const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -710,17 +716,8 @@
           window.parent.backToLibrary();
           return;
         }
-        if (window.parent.history.length > 1) {
-          window.parent.history.back();
-          return;
-        }
       }
-
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'index.html';
-      }
+      window.location.href = 'index.html';
     });
 
     function updateScoreDisplay() {
@@ -889,7 +886,7 @@
 
             gameState = 'PAUSED';
             eventTitle.innerText = e.title;
-            eventImage.src = `${e.imgIndex}.png`;
+            eventImage.src = `${e.imgIndex}.webp`;
             eventScreen.classList.remove('hidden');
           }
         }
