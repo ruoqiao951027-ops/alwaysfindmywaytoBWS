@@ -253,7 +253,7 @@
       transform: scale(0.92);
     }
 
-    /* 大事件彈窗：窄面板 */
+    /* 大事件彈窗：窄面板，cake變小 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -434,14 +434,13 @@
       return img;
     }
 
-
     const imgSmall = loadImage('small', 'small.webp');
     const imgBig = loadImage('big', 'big.webp');
     const imgCake = loadImage('cake', 'cake.webp');
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
-    // 背景照片採用 Lazy Loading，總共 30 張 (bg1.webp ~ bg30.webp)，播完第30張後循環回到第1張
+    // 總共 30 張背景照片 (bg1.webp ~ bg30.webp)
     const bgImages = {};
     const BG_TOTAL_COUNT = 30; 
     
@@ -454,7 +453,6 @@
       }
       return bgImages[key];
     }
-
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -488,7 +486,7 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 165;
+    const CAKE_BASE_WIDTH = 125; // 縮小 cake 大小
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -645,14 +643,15 @@
         currentX += 150;
       }
 
-      const cakeX = currentX + 220;
+      // 將 big 前的空白道路縮小（減少間距）
+      const cakeX = currentX + 100; 
       cakeObject = {
         x: cakeX,
         w: CAKE_BASE_WIDTH,
         triggered: false
       };
 
-      worldWidth = cakeX + 600;
+      worldWidth = cakeX + 400;
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -918,30 +917,35 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // --- 繪製無縫銜接的背景照片 (高度再高 15px，30張循環) ---
-      let bgDrawX = 0;
-      const bgOriginalW = 816;
+      // --- 精確計算無縫銜接的背景照片 (一張接著一張) ---
       const bgOriginalH = 725;
+      const targetHeight = (GROUND_Y - 75) + 15;
+      const drawH = targetHeight;
+      const drawY = GROUND_Y - drawH;
       const lazyLoadDistance = 1000;
       
+      let currentDrawX = 0;
       let imgSeqIndex = 0;
-      for (let i = 0; i < worldWidth; i += bgOriginalW) {
-        if (bgDrawX + bgOriginalW >= player.x - lazyLoadDistance && bgDrawX <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
-          const currentBgImg = getOrLoadBgImage(imgSeqIndex);
 
+      while (currentDrawX < worldWidth) {
+        const currentBgImg = getOrLoadBgImage(imgSeqIndex);
+        
+        // 動態計算當前圖片的實際寬度（根據高度等比例縮放）
+        let drawW = 816; // 預設寬度
+        if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
+          drawW = drawH * (currentBgImg.naturalWidth / currentBgImg.naturalHeight);
+        }
+
+        // 僅繪製在視野範圍附近的圖片以優化效能
+        if (currentDrawX + drawW >= player.x - lazyLoadDistance && currentDrawX <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
           if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
-            // 高度再增加 15px
-            const targetHeight = (GROUND_Y - 75) + 15;
-            const drawH = targetHeight;
-            const drawW = drawH * (bgOriginalW / bgOriginalH);
-            const drawY = GROUND_Y - drawH;
-            ctx.drawImage(currentBgImg, bgDrawX, drawY, drawW, drawH);
+            ctx.drawImage(currentBgImg, currentDrawX, drawY, drawW, drawH);
           }
         }
-        bgDrawX += bgOriginalW;
+
+        currentDrawX += drawW;
         imgSeqIndex++;
       }
-
 
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
@@ -1029,7 +1033,7 @@
           ctx.drawImage(imgCake, cakeObject.x, GROUND_Y - drawH, drawW, drawH);
         } else {
           ctx.fillStyle = '#FF6B81';
-          ctx.fillRect(cakeObject.x, GROUND_Y - 180, cakeObject.w, 180);
+          ctx.fillRect(cakeObject.x, GROUND_Y - 140, cakeObject.w, 140);
         }
       }
 
