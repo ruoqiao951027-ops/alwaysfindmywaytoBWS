@@ -239,8 +239,8 @@
 
     /* 跳躍按鈕圖片樣式 */
     .jump-btn {
-      width: 105px;
-      height: 105px;
+      width: 135px;
+      height: 135px;
       object-fit: contain;
       cursor: pointer;
       opacity: 0.75;
@@ -434,11 +434,27 @@
       return img;
     }
 
+
     const imgSmall = loadImage('small', 'small.webp');
     const imgBig = loadImage('big', 'big.webp');
     const imgCake = loadImage('cake', 'cake.webp');
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
+
+    // 背景照片採用 Lazy Loading（當主角靠近前 1000px 時才動態載入）
+    const bgImages = {};
+    const BG_TOTAL_COUNT = 35; // 假設總共有 35 張背景圖
+    
+    function getOrLoadBgImage(index) {
+      const bgIndex = (index % BG_TOTAL_COUNT) + 1;
+      const key = 'bg' + bgIndex;
+      if (!bgImages[key]) {
+        bgImages[key] = new Image();
+        bgImages[key].src = key + '.webp';
+      }
+      return bgImages[key];
+    }
+
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -901,6 +917,30 @@
 
       ctx.save();
       ctx.translate(-cameraX, 0);
+
+      // --- 繪製無縫銜接的背景照片 (Lazy Loading：主角前方 1000px 內才載入與繪製) ---
+      let bgDrawX = 0;
+      const bgOriginalW = 816;
+      const bgOriginalH = 725;
+      const lazyLoadDistance = 1000;
+      
+      let imgSeqIndex = 0;
+      for (let i = 0; i < worldWidth; i += bgOriginalW) {
+        // 如果該背景圖片距離主角小於 1000px 或已在畫面中，才進行載入
+        if (bgDrawX + bgOriginalW >= player.x - lazyLoadDistance && bgDrawX <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
+          const currentBgImg = getOrLoadBgImage(imgSeqIndex);
+
+          if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
+            const drawW = bgOriginalW;
+            const drawH = drawW * (bgOriginalH / bgOriginalW);
+            const drawY = GROUND_Y - drawH;
+            ctx.drawImage(currentBgImg, bgDrawX, drawY, drawW, drawH);
+          }
+        }
+        bgDrawX += bgOriginalW;
+        imgSeqIndex++;
+      }
+
 
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
