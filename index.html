@@ -19,11 +19,11 @@
       justify-content: center;
       align-items: center;
 
-      /* 背景圖片設定 */
-      background-image: url('bgmain.png'); 
-      background-size: cover;          
+      /* 背景圖片設定 (改為 webp) */
+      background-image: url('bgmain.webp'); 
+      background-size: cover;         
       background-position: center;     
-      background-repeat: no-repeat;   
+      background-repeat: no-repeat;    
       
       font-family: Arial, sans-serif;
       color: #fff;
@@ -73,13 +73,13 @@
       white-space: nowrap;
     }
 
-    /* 進度條軌道：加粗至 32px */
+    /* 進度條軌道：加粗至 40px (可依需求調整) */
     .progress-track {
       position: relative;
       width: 100%;
-      height: 32px;
+      height: 40px;
       background: rgba(255, 255, 255, 0.3);
-      border-radius: 16px;
+      border-radius: 20px;
       overflow: visible; /* 確保超大手指不被裁切 */
       backdrop-filter: blur(2px);
     }
@@ -92,8 +92,8 @@
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, #ff758c, #ff2a74);
-      border-radius: 16px;
-      transition: width 0.1s linear;
+      border-radius: 20px;
+      transition: width 0.2s linear;
     }
 
     /* 手指圖示：200px 定位 */
@@ -270,7 +270,8 @@
       <div class="splash-title-text">筒筒's Library</div>
       <div class="progress-track">
         <div id="progress-bar" class="progress-bar">
-          <img src="finger.png" alt="finger" class="finger-icon">
+          <!-- 手指圖片改為 webp -->
+          <img src="finger.webp" alt="finger" class="finger-icon">
         </div>
       </div>
       <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨</div>
@@ -336,10 +337,11 @@
     document.addEventListener('click', initAudio);
     document.addEventListener('touchstart', initAudio);
 
-    // 模擬資源載入進度條跑動
+    // 模擬資源載入進度條跑動 (已調慢)
     let progress = 0;
     const loadingInterval = setInterval(() => {
-      progress += Math.floor(Math.random() * 12) + 5;
+      // 每次隨機增加 2% ~ 5%，讓進度條跑得比較慢
+      progress += Math.floor(Math.random() * 4) + 2;
       
       if (progress >= 100) {
         progress = 100;
@@ -353,7 +355,7 @@
       }
       
       progressBar.style.width = progress + '%';
-    }, 120);
+    }, 200); // 頻率從 120ms 改為 200ms，讓速度變慢
 
     // 階段 1：點擊 Splash Screen
     function handleSplashClick() {
