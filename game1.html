@@ -931,8 +931,10 @@
           const currentBgImg = getOrLoadBgImage(imgSeqIndex);
 
           if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
-            const drawW = bgOriginalW;
-            const drawH = drawW * (bgOriginalH / bgOriginalW);
+            // 高度設定為從計分條下方到地平線(GROUND_Y)，並維持原始比例
+            const targetHeight = GROUND_Y - 75;
+            const drawH = targetHeight;
+            const drawW = drawH * (bgOriginalW / bgOriginalH);
             const drawY = GROUND_Y - drawH;
             ctx.drawImage(currentBgImg, bgDrawX, drawY, drawW, drawH);
           }
