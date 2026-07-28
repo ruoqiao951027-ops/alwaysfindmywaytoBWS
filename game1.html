@@ -235,23 +235,27 @@
     .arrow-btn:active { opacity: 0.95; }
     #btn-left { transform: scaleX(-1); }
     #btn-left:active { transform: scaleX(-1) scale(0.92); }
-    #btn-right:active { transform: scale(0.92); }
+    #btn-right:active, #btn-jump:active { transform: scale(0.92); }
 
-    /* 跳躍按鈕圖片樣式（維持與左右按鈕一致的尺寸與風格） */
-    .jump-btn {
-      width: 105px;
-      height: 105px;
-      object-fit: contain;
-      cursor: pointer;
+    .touch-btn {
+      width: 65px;
+      height: 65px;
+      background: rgba(255, 255, 255, 0.45);
+      border: 3px solid rgba(255, 255, 255, 0.85);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #3D2E24;
+      font-size: 1.5rem;
+      font-weight: bold;
+      backdrop-filter: blur(4px);
+      pointer-events: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
       opacity: 0.75;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-      transition: opacity 0.2s;
     }
 
-    .jump-btn:active {
-      opacity: 0.95;
-      transform: scale(0.92);
-    }
+    .touch-btn:active { opacity: 0.95; }
 
     /* 大事件彈窗：窄面板 */
     #event-modal {
@@ -327,7 +331,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <img src="jump.png" class="jump-btn" id="btn-jump" alt="跳躍">
+        <div class="touch-btn" id="btn-jump">▲</div>
       </div>
     </div>
 
@@ -542,6 +546,7 @@
 
       let currentX = 250;
 
+      // 1. 開頭先放 5 個 Small 筒筒
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
@@ -550,6 +555,7 @@
 
       currentX += 100;
 
+      // 生成 10 個 Big 大事件
       for (let b = 0; b < 10; b++) {
         let bigYOffset = 100;
         if (b === 1) bigYOffset = 110;
@@ -608,6 +614,7 @@
 
         currentX = eventNodes[b].x + 200;
 
+        // 在 Big 與下一個地形之間放置 10 個 Small (修正數量從 9 改為 10)
         if (b < 9) {
           for (let s = 0; s < 10; s++) {
             const isHigh = (s % 2 === 1);
@@ -623,6 +630,7 @@
       }
 
       currentX = eventNodes[9].x + 250;
+      // 結尾放 5 個 Small
       for (let i = 0; i < 5; i++) {
         const offset = (i % 2 === 1) ? 25 : 10;
         addSmallItemDirect(currentX, offset);
