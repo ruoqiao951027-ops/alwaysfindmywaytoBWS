@@ -881,15 +881,14 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 精確計算 bg1 ~ bg36 的循環 (bg36 播完後無縫接回 bg1)
-      const bgWidthSpan = 800; 
-      const totalSteps = Math.floor(cameraX / bgWidthSpan);
-      const bgIndex = (totalSteps % totalBgCount); 
+      // 每走一段距離（例如 400 像素），就切換到下一張不同的背景圖 (bg1 -> bg2 -> bg3 ... bg36 -> bg1)
+      const bgStepDistance = 400; 
+      const bgIndex = Math.floor(cameraX / bgStepDistance) % totalBgCount;
       const currentBgFile = bgImages[bgIndex >= 0 ? bgIndex : 0];
       
       // 更新 CSS 背景圖片與硬體加速捲動位置
       cssBackground.style.backgroundImage = `url('${currentBgFile}')`;
-      cssBackground.style.backgroundPosition = `${(-cameraX % bgWidthSpan)}px bottom`;
+      cssBackground.style.backgroundPosition = `${(-cameraX % CANVAS_WIDTH)}px bottom`;
 
       collectibles.forEach(c => {
         if (!c.collected) {
