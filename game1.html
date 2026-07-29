@@ -36,10 +36,28 @@
       box-shadow: 0 0 25px rgba(0,0,0,0.4);
     }
 
+    /* CSS 背景層：利用硬體加速與 background-position 實現流暢捲動 */
+    #css-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-repeat: repeat-x;
+      background-position: 0 bottom;
+      background-size: auto 75%;
+      pointer-events: none;
+      z-index: 1;
+      will-change: background-position;
+    }
+
     canvas {
       display: block;
       width: 100%;
       height: 100%;
+      position: relative;
+      z-index: 2;
+      background: transparent;
     }
 
     /* 計分板：純文字無外框 */
@@ -237,7 +255,6 @@
     #btn-left:active { transform: scaleX(-1) scale(0.92); }
     #btn-right:active { transform: scale(0.92); }
 
-    /* 跳躍按鈕圖片樣式 */
     .jump-btn {
       width: 135px;
       height: 135px;
@@ -253,7 +270,6 @@
       transform: scale(0.92);
     }
 
-    /* 大事件彈窗：窄面板 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -311,6 +327,9 @@
   <audio id="sound-end2" src="end2.mp3" preload="auto"></audio>
 
   <div id="game-wrapper">
+    <!-- CSS 背景層取代 Canvas 內的背景繪製 -->
+    <div id="css-background"></div>
+
     <div id="score-badge">累積筒筒數: <span id="total-score" style="margin-left: 6px;">0</span></div>
 
     <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -367,6 +386,7 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const cssBackground = document.getElementById('css-background');
 
     const CANVAS_WIDTH = 800;
     const CANVAS_HEIGHT = 450;
@@ -440,21 +460,8 @@
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
-    // 總共 30 張背景照片 (bg1.webp ~ bg30.webp)
-    const bgImages = {};
-    const BG_TOTAL_COUNT = 30; 
-    
-    function preloadBgImages() {
-      for (let i = 1; i <= BG_TOTAL_COUNT; i++) {
-        const key = 'bg' + i;
-        if (!bgImages[key]) {
-          const img = new Image();
-          img.src = key + '.webp';
-          bgImages[key] = img;
-        }
-      }
-    }
-    preloadBgImages();
+    // 預設採用第一張背景作為 CSS 背景圖
+    cssBackground.style.backgroundImage = "url('bg1.webp')";
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -470,7 +477,6 @@
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
-    let bgLayoutCache = []; // 快取背景位置與寬度
 
     const player = {
       x: 100,
@@ -548,37 +554,6 @@
       const surfaceY = getGroundYAt(x + SMALL_BASE_WIDTH / 2);
       const finalY = surfaceY - SMALL_BASE_WIDTH - offsetHeight;
       collectibles.push({ x: x, y: finalY, collected: false });
-    }
-
-    // 初始化背景快取座標，避免在影格中不斷重複運算
-    function buildBackgroundCache() {
-      bgLayoutCache = [];
-      const targetHeight = (GROUND_Y - 75) + 15;
-      let currentDrawX = 0;
-      let imgSeqIndex = 0;
-
-      while (currentDrawX < worldWidth) {
-        const bgIndex = (imgSeqIndex % BG_TOTAL_COUNT) + 1;
-        const key = 'bg' + bgIndex;
-        const img = bgImages[key];
-
-        // 預設寬度防呆，若圖片尚未載入完畢先以 816 比例估算
-        let drawW = 816;
-        if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
-          drawW = targetHeight * (img.naturalWidth / img.naturalHeight);
-        }
-
-        bgLayoutCache.push({
-          key: key,
-          x: currentDrawX,
-          w: drawW,
-          h: targetHeight,
-          y: GROUND_Y - targetHeight
-        });
-
-        currentDrawX += drawW;
-        imgSeqIndex++;
-      }
     }
 
     function generateLevelData() {
@@ -685,7 +660,6 @@
       };
 
       worldWidth = cakeX + 400;
-      buildBackgroundCache(); // 關卡建立後同時產生背景快取
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -903,6 +877,9 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
+      // 利用 CSS background-position 實現硬體加速背景捲動
+      cssBackground.style.backgroundPosition = `${-cameraX * 0.5}px bottom`;
+
       collectibles.forEach(c => {
         if (!c.collected) {
           if (player.x < c.x + SMALL_BASE_WIDTH &&
@@ -950,19 +927,6 @@
 
       ctx.save();
       ctx.translate(-cameraX, 0);
-
-      // --- 使用快取繪製背景照片，提升運行流暢度 ---
-      const lazyLoadDistance = 1000;
-      for (let i = 0; i < bgLayoutCache.length; i++) {
-        const bg = bgLayoutCache[i];
-        // 僅繪製在視野範圍內的背景
-        if (bg.x + bg.w >= player.x - lazyLoadDistance && bg.x <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
-          const img = bgImages[bg.key];
-          if (img && img.complete && img.naturalWidth > 0) {
-            ctx.drawImage(img, bg.x, bg.y, bg.w, bg.h);
-          }
-        }
-      }
 
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
