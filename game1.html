@@ -253,7 +253,7 @@
       transform: scale(0.92);
     }
 
-    /* 大事件彈窗：窄面板，cake變小 */
+    /* 大事件彈窗：窄面板 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -375,8 +375,8 @@
     const gameBgm = document.getElementById('game-bgm');
     const sfxSound1 = document.getElementById('sound1');
     const sfxSound2 = document.getElementById('sound2');
-    const sfxEnd1 = document.getElementById('sound-end1');
-    const sfxEnd2 = document.getElementById('sound-end2');
+    const sfxEnd1 = document.getElementById('end1');
+    const sfxEnd2 = document.getElementById('end2');
 
     const DEFAULT_BGM_VOLUME = 0.12;
     const LOW_BGM_VOLUME = 0.04;
@@ -444,15 +444,17 @@
     const bgImages = {};
     const BG_TOTAL_COUNT = 30; 
     
-    function getOrLoadBgImage(index) {
-      const bgIndex = (index % BG_TOTAL_COUNT) + 1;
-      const key = 'bg' + bgIndex;
-      if (!bgImages[key]) {
-        bgImages[key] = new Image();
-        bgImages[key].src = key + '.webp';
+    function preloadBgImages() {
+      for (let i = 1; i <= BG_TOTAL_COUNT; i++) {
+        const key = 'bg' + i;
+        if (!bgImages[key]) {
+          const img = new Image();
+          img.src = key + '.webp';
+          bgImages[key] = img;
+        }
       }
-      return bgImages[key];
     }
+    preloadBgImages();
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -468,6 +470,7 @@
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
+    let bgLayoutCache = []; // 快取背景位置與寬度
 
     const player = {
       x: 100,
@@ -486,7 +489,7 @@
 
     const SMALL_BASE_WIDTH = 50;
     const BIG_BASE_WIDTH = 95;
-    const CAKE_BASE_WIDTH = 125; // 縮小 cake 大小
+    const CAKE_BASE_WIDTH = 125;
 
     const eventTitles = [
       '2010年模特兒出道',
@@ -545,6 +548,37 @@
       const surfaceY = getGroundYAt(x + SMALL_BASE_WIDTH / 2);
       const finalY = surfaceY - SMALL_BASE_WIDTH - offsetHeight;
       collectibles.push({ x: x, y: finalY, collected: false });
+    }
+
+    // 初始化背景快取座標，避免在影格中不斷重複運算
+    function buildBackgroundCache() {
+      bgLayoutCache = [];
+      const targetHeight = (GROUND_Y - 75) + 15;
+      let currentDrawX = 0;
+      let imgSeqIndex = 0;
+
+      while (currentDrawX < worldWidth) {
+        const bgIndex = (imgSeqIndex % BG_TOTAL_COUNT) + 1;
+        const key = 'bg' + bgIndex;
+        const img = bgImages[key];
+
+        // 預設寬度防呆，若圖片尚未載入完畢先以 816 比例估算
+        let drawW = 816;
+        if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
+          drawW = targetHeight * (img.naturalWidth / img.naturalHeight);
+        }
+
+        bgLayoutCache.push({
+          key: key,
+          x: currentDrawX,
+          w: drawW,
+          h: targetHeight,
+          y: GROUND_Y - targetHeight
+        });
+
+        currentDrawX += drawW;
+        imgSeqIndex++;
+      }
     }
 
     function generateLevelData() {
@@ -643,7 +677,6 @@
         currentX += 150;
       }
 
-      // 將 big 前的空白道路縮小（減少間距）
       const cakeX = currentX + 100; 
       cakeObject = {
         x: cakeX,
@@ -652,6 +685,7 @@
       };
 
       worldWidth = cakeX + 400;
+      buildBackgroundCache(); // 關卡建立後同時產生背景快取
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -917,34 +951,17 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // --- 精確計算無縫銜接的背景照片 (一張接著一張) ---
-      const bgOriginalH = 725;
-      const targetHeight = (GROUND_Y - 75) + 15;
-      const drawH = targetHeight;
-      const drawY = GROUND_Y - drawH;
+      // --- 使用快取繪製背景照片，提升運行流暢度 ---
       const lazyLoadDistance = 1000;
-      
-      let currentDrawX = 0;
-      let imgSeqIndex = 0;
-
-      while (currentDrawX < worldWidth) {
-        const currentBgImg = getOrLoadBgImage(imgSeqIndex);
-        
-        // 動態計算當前圖片的實際寬度（根據高度等比例縮放）
-        let drawW = 816; // 預設寬度
-        if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
-          drawW = drawH * (currentBgImg.naturalWidth / currentBgImg.naturalHeight);
-        }
-
-        // 僅繪製在視野範圍附近的圖片以優化效能
-        if (currentDrawX + drawW >= player.x - lazyLoadDistance && currentDrawX <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
-          if (currentBgImg && currentBgImg.complete && currentBgImg.naturalWidth > 0) {
-            ctx.drawImage(currentBgImg, currentDrawX, drawY, drawW, drawH);
+      for (let i = 0; i < bgLayoutCache.length; i++) {
+        const bg = bgLayoutCache[i];
+        // 僅繪製在視野範圍內的背景
+        if (bg.x + bg.w >= player.x - lazyLoadDistance && bg.x <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
+          const img = bgImages[bg.key];
+          if (img && img.complete && img.naturalWidth > 0) {
+            ctx.drawImage(img, bg.x, bg.y, bg.w, bg.h);
           }
         }
-
-        currentDrawX += drawW;
-        imgSeqIndex++;
       }
 
       ctx.strokeStyle = '#8C6D58';
