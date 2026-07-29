@@ -460,8 +460,12 @@
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
-    // 預設採用第一張背景作為 CSS 背景圖
-    cssBackground.style.backgroundImage = "url('bg1.webp')";
+    // 動態載入 bg1.webp ~ bg36.webp
+    const totalBgCount = 36;
+    const bgImages = [];
+    for (let i = 1; i <= totalBgCount; i++) {
+      bgImages.push(`bg${i}.webp`);
+    }
 
     const startScreen = document.getElementById('start-screen');
     const eventScreen = document.getElementById('event-screen');
@@ -877,8 +881,14 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 利用 CSS background-position 實現硬體加速背景捲動
-      cssBackground.style.backgroundPosition = `${-cameraX * 0.5}px bottom`;
+      // 根據 cameraX 計算對應的背景圖索引 (bg1 ~ bg36 循環)
+      const bgWidthSpan = 1200; // 每張背景對應的世界寬度區段
+      const bgIndex = Math.floor(cameraX / bgWidthSpan) % totalBgCount;
+      const currentBgFile = bgImages[bgIndex >= 0 ? bgIndex : 0];
+      
+      // 更新 CSS 背景圖片與硬體加速捲動位置
+      cssBackground.style.backgroundImage = `url('${currentBgFile}')`;
+      cssBackground.style.backgroundPosition = `${(-cameraX % bgWidthSpan) * 0.5}px bottom`;
 
       collectibles.forEach(c => {
         if (!c.collected) {
