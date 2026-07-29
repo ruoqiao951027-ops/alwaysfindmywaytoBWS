@@ -881,14 +881,15 @@
       if (cameraX < 0) cameraX = 0;
       if (cameraX > worldWidth - CANVAS_WIDTH) cameraX = worldWidth - CANVAS_WIDTH;
 
-      // 根據 cameraX 計算對應的背景圖索引 (bg1 ~ bg36 循環)
-      const bgWidthSpan = 1200; // 每張背景對應的世界寬度區段
-      const bgIndex = Math.floor(cameraX / bgWidthSpan) % totalBgCount;
+      // 精確計算 bg1 ~ bg36 的循環 (bg36 播完後無縫接回 bg1)
+      const bgWidthSpan = 800; 
+      const totalSteps = Math.floor(cameraX / bgWidthSpan);
+      const bgIndex = (totalSteps % totalBgCount); 
       const currentBgFile = bgImages[bgIndex >= 0 ? bgIndex : 0];
       
       // 更新 CSS 背景圖片與硬體加速捲動位置
       cssBackground.style.backgroundImage = `url('${currentBgFile}')`;
-      cssBackground.style.backgroundPosition = `${(-cameraX % bgWidthSpan) * 0.5}px bottom`;
+      cssBackground.style.backgroundPosition = `${(-cameraX % bgWidthSpan)}px bottom`;
 
       collectibles.forEach(c => {
         if (!c.collected) {
