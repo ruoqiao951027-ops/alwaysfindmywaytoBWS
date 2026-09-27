@@ -866,9 +866,10 @@
 
       if (player.x < 0) player.x = 0;
 
-if (cakeObject && !cakeObject.triggered) {
+      if (cakeObject && !cakeObject.triggered) {
+        // [修正] 正確計算蛋糕實際高度與 Y 座標，避免碰撞判斷失效卡在原地
         let cakeH = CAKE_BASE_WIDTH;
-        if (imgCake.complete && imgCake.naturalWidth > 0) {
+        if (imgCake.complete && imgCake.naturalWidth > 0 && imgCake.naturalHeight > 0) {
           cakeH = CAKE_BASE_WIDTH * (imgCake.naturalHeight / imgCake.naturalWidth);
         }
         const cakeY = GROUND_Y - cakeH;
@@ -898,7 +899,7 @@ if (cakeObject && !cakeObject.triggered) {
 
           // 強制顯示結算畫面
           endScreen.classList.remove('hidden');
-          return; // 直接中斷此影格的後續更新，避免狀態混亂
+          return; 
         }
       }
 
@@ -958,7 +959,6 @@ if (cakeObject && !cakeObject.triggered) {
       const lazyLoadDistance = 500;
       for (let i = 0; i < bgLayoutCache.length; i++) {
         const bg = bgLayoutCache[i];
-        // 僅繪製在視野範圍內的背景
         if (bg.x + bg.w >= player.x - lazyLoadDistance && bg.x <= player.x + CANVAS_WIDTH + lazyLoadDistance) {
           const img = bgImages[bg.key];
           if (img && img.complete && img.naturalWidth > 0) {
