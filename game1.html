@@ -121,15 +121,16 @@
     h1 {
       font-size: 1.6rem;
       color: #FF6B81;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       text-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
+    /* 調整這裡的字體大小與間距，讓文字變小、更精緻 */
     p.intro-text {
-      font-size: 0.92rem;
-      line-height: 1.6;
-      margin-bottom: 20px;
-      max-width: 520px;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      max-width: 540px;
       text-align: center;
       color: #FFF8F5;
       text-shadow: 0 1px 3px rgba(0,0,0,0.6);
@@ -470,14 +471,14 @@
     const endTitle = document.getElementById('end-title');
     const totalScoreEl = document.getElementById('total-score');
 
-    let gameState = 'START'; // 'START', 'PLAYING', 'PAUSED', 'FIREWORKS', 'END'
+    let gameState = 'START'; 
     let collectedSmallCount = 0;
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
     let bgLayoutCache = [];
 
-    // 煙火特效相關變數
+    // 豐富版煙火變數
     let fireworksTimer = 0;
     let fireworksParticles = [];
     let savedEndData = null;
@@ -800,10 +801,9 @@
       fireworksParticles = [];
     }
 
-    // 升級版：更豐富、粒子更多、顏色更華麗的煙火產生器
     function createFirework(x, y) {
       const colors = ['#FF6B81', '#E88D67', '#FFD700', '#FF69B4', '#00FFFF', '#FFA500', '#DA70D6', '#00FF7F', '#FF4500'];
-      const particleCount = 70; // 增加粒子數量
+      const particleCount = 70;
       const baseColor = colors[Math.floor(Math.random() * colors.length)];
       
       for (let i = 0; i < particleCount; i++) {
@@ -815,38 +815,34 @@
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           alpha: 1.0,
-          decay: Math.random() * 0.012 + 0.008, // 讓尾巴稍微拖久一點點
-          color: Math.random() < 0.2 ? '#FFFFFF' : baseColor, // 20% 機率夾雜閃亮白光
+          decay: Math.random() * 0.012 + 0.008,
+          color: Math.random() < 0.2 ? '#FFFFFF' : baseColor,
           size: Math.random() * 5 + 2.5
         });
       }
     }
 
     function update() {
-      // 煙火特效狀態處理
       if (gameState === 'FIREWORKS') {
         fireworksTimer--;
         
-        // 更頻繁、更大範圍地在畫面中隨機綻放煙火
         if (fireworksTimer % 18 === 0 && fireworksTimer > 0) {
           const randX = cameraX + Math.random() * CANVAS_WIDTH;
           const randY = Math.random() * (CANVAS_HEIGHT * 0.6) + 30;
           createFirework(randX, randY);
         }
 
-        // 更新煙火粒子物理
         for (let i = fireworksParticles.length - 1; i >= 0; i--) {
           let p = fireworksParticles[i];
           p.x += p.vx;
           p.y += p.vy;
-          p.vy += 0.07; // 微量重力
+          p.vy += 0.07;
           p.alpha -= p.decay;
           if (p.alpha <= 0) {
             fireworksParticles.splice(i, 1);
           }
         }
 
-        // 3秒（大約 180 個影格）結束後跳出結算畫面
         if (fireworksTimer <= 0) {
           gameState = 'END';
           if (savedEndData) {
@@ -932,17 +928,15 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 檢查終點蛋糕碰撞 -> 進入煙火特效狀態
       if (cakeObject && !cakeObject.triggered) {
         if (player.x + player.width > cakeObject.x - 50 &&
             player.x < cakeObject.x + cakeObject.w + 50) {
 
           cakeObject.triggered = true;
           gameState = 'FIREWORKS';
-          fireworksTimer = 180; // 約 3 秒 (60fps * 3)
+          fireworksTimer = 180;
           fireworksParticles = [];
 
-          // 觸發時瞬間在蛋糕周圍與高空引爆多發大煙火
           createFirework(cakeObject.x + cakeObject.w / 2, GROUND_Y - 160);
           createFirework(cakeObject.x - 80, GROUND_Y - 220);
           createFirework(cakeObject.x + 180, GROUND_Y - 200);
@@ -1158,14 +1152,13 @@
       }
       ctx.restore();
 
-      // 繪製升級後更豐富的煙火粒子
       if (gameState === 'FIREWORKS') {
         fireworksParticles.forEach(p => {
           ctx.save();
           ctx.globalAlpha = p.alpha;
           ctx.fillStyle = p.color;
           ctx.shadowBlur = 10;
-          ctx.shadowColor = p.color; // 發光效果
+          ctx.shadowColor = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
