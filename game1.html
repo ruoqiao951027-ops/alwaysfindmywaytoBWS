@@ -77,7 +77,7 @@
         align-items: center;
         text-align: center;
         font-size: 1.2rem;
-        z-index: 100;
+        z-index: 200;
         padding: 20px;
         box-sizing: border-box;
       }
@@ -89,7 +89,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(45, 32, 23, 0.75);
+      background: rgba(45, 32, 23, 0.85);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -100,9 +100,19 @@
       padding: 10px;
     }
 
+    /* 確保結算畫面層級最高，絕對不會被蓋住或卡住 */
+    #end-screen {
+      z-index: 1000 !important;
+    }
+
     #start-screen {
       justify-content: center;
-      padding-top: 30px; 
+      padding-top: 30px;
+      z-index: 100;
+    }
+
+    #event-screen {
+      z-index: 500;
     }
 
     .hidden {
@@ -152,6 +162,8 @@
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(232, 141, 103, 0.5);
       white-space: nowrap;
+      position: relative;
+      z-index: 1001;
     }
 
     .btn-secondary {
@@ -293,10 +305,6 @@
       transform: translateY(-50%);
       padding: 10px 16px;
     }
-
-    #close-event-btn:active {
-      transform: translateY(-50%) scale(0.95);
-    }
   </style>
 </head>
 <body>
@@ -406,17 +414,18 @@
     }
 
     function playEndSound(isPerfect) {
-      gameBgm.volume = LOW_BGM_VOLUME;
-
-      if (isPerfect) {
-        sfxEnd2.currentTime = 0;
-        sfxEnd2.volume = 1.0;
-        sfxEnd2.play().catch(() => {});
-      } else {
-        sfxEnd1.currentTime = 0;
-        sfxEnd1.volume = 1.0;
-        sfxEnd1.play().catch(() => {});
-      }
+      try {
+        gameBgm.volume = LOW_BGM_VOLUME;
+        if (isPerfect) {
+          sfxEnd2.currentTime = 0;
+          sfxEnd2.volume = 1.0;
+          sfxEnd2.play().catch(() => {});
+        } else {
+          sfxEnd1.currentTime = 0;
+          sfxEnd1.volume = 1.0;
+          sfxEnd1.play().catch(() => {});
+        }
+      } catch (e) {}
     }
 
     window.addEventListener('click', initAudio, { once: true });
@@ -860,10 +869,10 @@
 
       if (player.x < 0) player.x = 0;
 
-      // [極致寬鬆判定] 只要玩家靠近蛋糕左右與上下範圍，就必定觸發結局
+      // 檢查終點蛋糕碰撞
       if (cakeObject && !cakeObject.triggered) {
-        if (player.x + player.width > cakeObject.x - 40 &&
-            player.x < cakeObject.x + cakeObject.w + 40) {
+        if (player.x + player.width > cakeObject.x - 50 &&
+            player.x < cakeObject.x + cakeObject.w + 50) {
 
           cakeObject.triggered = true;
           gameState = 'END';
@@ -882,6 +891,7 @@
             finalScore.innerHTML = `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
           }
 
+          // 強制移除 hidden 並確保顯示
           endScreen.classList.remove('hidden');
           return; 
         }
