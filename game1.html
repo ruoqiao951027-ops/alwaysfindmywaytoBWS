@@ -42,7 +42,6 @@
       height: 100%;
     }
 
-    /* 計分板：純文字無外框 */
     #score-badge {
       position: absolute;
       top: calc(75px + env(safe-area-inset-top));
@@ -237,7 +236,6 @@
     #btn-left:active { transform: scaleX(-1) scale(0.92); }
     #btn-right:active { transform: scale(0.92); }
 
-    /* 跳躍按鈕圖片樣式 */
     .jump-btn {
       width: 110px;
       height: 110px;
@@ -253,7 +251,6 @@
       transform: scale(0.92);
     }
 
-    /* 大事件彈窗：窄面板 */
     #event-modal {
       position: relative;
       background: rgba(250, 245, 240, 0.98);
@@ -440,7 +437,6 @@
     const imgRunRight = loadImage('runRight', 'runright.webp');
     const imgRunLeft = loadImage('runLeft', 'runleft.webp');
 
-    // 總共 30 張背景照片 (bg1.webp ~ bg30.webp)
     const bgImages = {};
     const BG_TOTAL_COUNT = 30; 
     
@@ -470,7 +466,7 @@
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
-    let bgLayoutCache = []; // 快取背景位置與寬度
+    let bgLayoutCache = [];
 
     const player = {
       x: 100,
@@ -550,7 +546,6 @@
       collectibles.push({ x: x, y: finalY, collected: false });
     }
 
-    // 初始化背景快取座標，避免在影格中不斷重複運算
     function buildBackgroundCache() {
       bgLayoutCache = [];
       const targetHeight = (GROUND_Y - 75) + 15;
@@ -562,7 +557,6 @@
         const key = 'bg' + bgIndex;
         const img = bgImages[key];
 
-        // 預設寬度防呆，若圖片尚未載入完畢先以 816 比例估算
         let drawW = 816;
         if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
           drawW = targetHeight * (img.naturalWidth / img.naturalHeight);
@@ -684,8 +678,8 @@
         triggered: false
       };
 
-      worldWidth = cakeX + 400;
-      buildBackgroundCache(); // 關卡建立後同時產生背景快取
+      worldWidth = cakeX + 800;
+      buildBackgroundCache();
     }
 
     const keys = { left: false, right: false, jump: false };
@@ -866,23 +860,14 @@
 
       if (player.x < 0) player.x = 0;
 
+      // [極致寬鬆判定] 只要玩家靠近蛋糕左右與上下範圍，就必定觸發結局
       if (cakeObject && !cakeObject.triggered) {
-        // [修正] 正確計算蛋糕實際高度與 Y 座標，避免碰撞判斷失效卡在原地
-        let cakeH = CAKE_BASE_WIDTH;
-        if (imgCake.complete && imgCake.naturalWidth > 0 && imgCake.naturalHeight > 0) {
-          cakeH = CAKE_BASE_WIDTH * (imgCake.naturalHeight / imgCake.naturalWidth);
-        }
-        const cakeY = GROUND_Y - cakeH;
-
-        if (player.x < cakeObject.x + cakeObject.w &&
-            player.x + player.width > cakeObject.x &&
-            player.y < cakeY + cakeH &&
-            player.y + player.height > cakeY) {
+        if (player.x + player.width > cakeObject.x - 40 &&
+            player.x < cakeObject.x + cakeObject.w + 40) {
 
           cakeObject.triggered = true;
           gameState = 'END';
 
-          // 計算是否達成完美結局 (100個小道具 + 全部大事件)
           const allSmallCollected = (collectedSmallCount === 100);
           const allBigCollected = eventNodes.every(e => e.collected);
           const isPerfectEnd = allSmallCollected && allBigCollected;
@@ -897,7 +882,6 @@
             finalScore.innerHTML = `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
           }
 
-          // 強制顯示結算畫面
           endScreen.classList.remove('hidden');
           return; 
         }
@@ -955,7 +939,6 @@
       ctx.save();
       ctx.translate(-cameraX, 0);
 
-      // --- 使用快取繪製背景照片，提升運行流暢度 ---
       const lazyLoadDistance = 500;
       for (let i = 0; i < bgLayoutCache.length; i++) {
         const bg = bgLayoutCache[i];
