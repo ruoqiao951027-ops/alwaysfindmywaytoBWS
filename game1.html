@@ -100,7 +100,6 @@
       padding: 10px;
     }
 
-    /* 確保結算畫面層級最高，絕對不會被蓋住或卡住 */
     #end-screen {
       z-index: 1000 !important;
     }
@@ -470,12 +469,17 @@
     const endTitle = document.getElementById('end-title');
     const totalScoreEl = document.getElementById('total-score');
 
-    let gameState = 'START';
+    let gameState = 'START'; // 'START', 'PLAYING', 'PAUSED', 'FIREWORKS', 'END'
     let collectedSmallCount = 0;
     let totalScore = 0;
     let cameraX = 0;
     let worldWidth = 28000;
     let bgLayoutCache = [];
+
+    // 煙火特效相關變數
+    let fireworksTimer = 0;
+    let fireworksParticles = [];
+    let savedEndData = null;
 
     const player = {
       x: 100,
@@ -792,9 +796,66 @@
       player.vy = 0;
       player.walkTimer = 0;
       cameraX = 0;
+      fireworksParticles = [];
+    }
+
+    // 建立一發煙火爆炸粒子
+    function createFirework(x, y) {
+      const colors = ['#FF6B81', '#E88D67', '#FFD700', '#FF69B4', '#00FFFF', '#FFA500'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const particleCount = 45;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        fireworksParticles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1.0,
+          decay: Math.random() * 0.015 + 0.01,
+          color: color,
+          size: Math.random() * 4 + 2
+        });
+      }
     }
 
     function update() {
+      // 煙火特效狀態處理
+      if (gameState === 'FIREWORKS') {
+        fireworksTimer--;
+        
+        // 每隔一段時間隨機在畫面中上空施放一發煙火
+        if (fireworksTimer % 35 === 0 && fireworksTimer > 0) {
+          const randX = cameraX + Math.random() * CANVAS_WIDTH;
+          const randY = Math.random() * (CANVAS_HEIGHT * 0.5) + 50;
+          createFirework(randX, randY);
+        }
+
+        // 更新煙火粒子物理
+        for (let i = fireworksParticles.length - 1; i >= 0; i--) {
+          let p = fireworksParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.08; // 微量重力
+          p.alpha -= p.decay;
+          if (p.alpha <= 0) {
+            fireworksParticles.splice(i, 1);
+          }
+        }
+
+        // 3秒（大約 180 個影格）結束後跳出結算畫面
+        if (fireworksTimer <= 0) {
+          gameState = 'END';
+          if (savedEndData) {
+            endTitle.innerText = savedEndData.title;
+            finalScore.innerHTML = savedEndData.content;
+          }
+          endScreen.classList.remove('hidden');
+        }
+        return;
+      }
+
       if (gameState !== 'PLAYING') return;
 
       if (keys.left) {
@@ -869,13 +930,20 @@
 
       if (player.x < 0) player.x = 0;
 
-      // 檢查終點蛋糕碰撞
+      // 檢查終點蛋糕碰撞 -> 進入煙火特效狀態
       if (cakeObject && !cakeObject.triggered) {
         if (player.x + player.width > cakeObject.x - 50 &&
             player.x < cakeObject.x + cakeObject.w + 50) {
 
           cakeObject.triggered = true;
-          gameState = 'END';
+          gameState = 'FIREWORKS';
+          fireworksTimer = 180; // 約 3 秒 (60fps * 3)
+          fireworksParticles = [];
+
+          // 初始立即在蛋糕上方施放幾發煙火
+          createFirework(cakeObject.x + cakeObject.w / 2, GROUND_Y - 150);
+          createFirework(cakeObject.x - 50, GROUND_Y - 200);
+          createFirework(cakeObject.x + 150, GROUND_Y - 180);
 
           const allSmallCollected = (collectedSmallCount === 100);
           const allBigCollected = eventNodes.every(e => e.collected);
@@ -884,15 +952,16 @@
           playEndSound(isPerfectEnd);
 
           if (isPerfectEnd) {
-            endTitle.innerText = "🎉 隱藏結局";
-            finalScore.innerHTML = `一路擄獲了∞個筒筒的心❤️‍🔥<br>我會陪你走到世界上的每個舞台、每處帷幕<br>以後也一直、一直陪著佑錫走花路吧！`;
+            savedEndData = {
+              title: "🎉 隱藏結局",
+              content: `一路擄獲了∞個筒筒的心❤️‍🔥<br>我會陪你走到世界上的每個舞台、每處帷幕<br>以後也一直、一直陪著佑錫走花路吧！`
+            };
           } else {
-            endTitle.innerText = "🎉 幸福結局";
-            finalScore.innerHTML = `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`;
+            savedEndData = {
+              title: "🎉 幸福結局",
+              content: `一路累積了 ${totalScore.toLocaleString()} 個筒筒的心❤️‍🔥<br>以後也一直、一直陪著佑錫走花路吧！`
+            };
           }
-
-          // 強制移除 hidden 並確保顯示
-          endScreen.classList.remove('hidden');
           return; 
         }
       }
@@ -1085,6 +1154,19 @@
         ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
       }
       ctx.restore();
+
+      // 繪製煙火粒子
+      if (gameState === 'FIREWORKS') {
+        fireworksParticles.forEach(p => {
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      }
 
       ctx.restore();
     }
