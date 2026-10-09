@@ -125,10 +125,10 @@
       text-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
-    /* 字體大小已調大並優化行距 */
+    /* 調整這裡的字體大小變得更小、更精巧 */
     p.intro-text {
-      font-size: 0.9rem;
-      line-height: 1.6;
+      font-size: 0.85rem;
+      line-height: 1.45;
       margin-bottom: 14px;
       max-width: 560px;
       text-align: center;
@@ -345,7 +345,7 @@
         ❤️<br>
         ●使用左右箭頭控制前進與後退、右下按鈕來跳躍<br>
         ●努力收集筒筒與狗狗，解鎖隱藏結局，陪伴佑錫步上花路🌸<br>
-        若圖片未成功載入可稍等三秒或重新整理網頁喔
+         若圖片未成功載入可稍等三秒或重新整理網頁喔
       </p>
       <button class="btn" id="start-btn">開始旅程</button>
     </div>
@@ -1121,29 +1121,43 @@
             const aspect = imgSmall.naturalHeight / imgSmall.naturalWidth;
             const drawW = SMALL_BASE_WIDTH;
             const drawH = drawW * aspect;
-            ctx.drawImage(imgSmall, c.x, c.y + (SMALL_BASE_WIDTH - drawH), drawW, drawH);
+            ctx.drawImage(imgSmall, c.x, c.y, drawW, drawH);
           } else {
-            ctx.fillStyle = '#E88D67';
+            ctx.fillStyle = '#FF758c';
             ctx.beginPath();
-            ctx.arc(c.x + SMALL_BASE_WIDTH/2, c.y + SMALL_BASE_WIDTH/2, SMALL_BASE_WIDTH/2, 0, Math.PI * 2);
+            ctx.arc(c.x + 25, c.y + 25, 20, 0, Math.PI * 2);
             ctx.fill();
           }
         }
       });
 
-      const activeImg = (player.facing === 'left') ? imgRunLeft : imgRunRight;
-      if (activeImg && activeImg.complete && activeImg.naturalWidth > 0) {
-        ctx.drawImage(activeImg, player.x, player.y, player.width, player.height);
-      } else {
-        ctx.fillStyle = '#FF6B81';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+      const curImg = player.facing === 'left' ? imgRunLeft : imgRunRight;
+      ctx.save();
+
+      const centerX = player.x + player.width / 2;
+      const centerY = player.y + player.height / 2;
+      ctx.translate(centerX, centerY);
+
+      if (player.vx !== 0 && player.isGrounded) {
+        const angle = Math.sin(player.walkTimer) * 0.2;
+        ctx.rotate(angle);
       }
+
+      if (curImg.complete && curImg.naturalWidth > 0) {
+        ctx.drawImage(curImg, -player.width / 2, -player.height / 2, player.width, player.height);
+      } else {
+        ctx.fillStyle = '#E88D67';
+        ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+      }
+      ctx.restore();
 
       if (gameState === 'FIREWORKS') {
         fireworksParticles.forEach(p => {
           ctx.save();
           ctx.globalAlpha = p.alpha;
           ctx.fillStyle = p.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
@@ -1161,7 +1175,7 @@
     }
 
     generateLevelData();
-    requestAnimationFrame(gameLoop);
+    gameLoop();
   </script>
 </body>
 </html>
