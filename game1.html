@@ -1026,78 +1026,55 @@
         }
       }
 
-      
-      // 先填滿地形下方，讓凹凸圓弧也有完整的填色
-      const stepX = 10;
-
-      ctx.beginPath();
-      ctx.moveTo(0, GROUND_Y);
-      
-      for (let px = 0; px <= worldWidth; px += stepX) {
-        let py = GROUND_Y;
-
-        for (let ct of curvedTerrains) {
-          if (px >= ct.x && px <= ct.x + ct.w) {
-            const norm = (px - ct.x) / ct.w;
-            const curveVal = Math.sin(norm * Math.PI) * ct.height;
-            py = ct.type === 'concave'
-              ? GROUND_Y + curveVal
-              : GROUND_Y - curveVal;
-            break;
-          }
-        }
-
-        for (let s of slopes) {
-          if (px >= s.x1 && px <= s.x2) {
-            const progress = (px - s.x1) / (s.x2 - s.x1);
-            py = s.y1 + progress * (s.y2 - s.y1);
-            break;
-          }
-        }
-
-        ctx.lineTo(px, py);
-      }
-
-      // 封閉地形底部，填滿整個地面下方
-      ctx.lineTo(worldWidth, CANVAS_HEIGHT);
-      ctx.lineTo(0, CANVAS_HEIGHT);
-      ctx.closePath();
-
-      ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
-      ctx.fill();
-
-      // 再單獨繪製地形輪廓，避免底部封閉線被描繪出來
-      ctx.beginPath();
-      ctx.moveTo(0, GROUND_Y);
-
-      for (let px = 0; px <= worldWidth; px += stepX) {
-        let py = GROUND_Y;
-
-        for (let ct of curvedTerrains) {
-          if (px >= ct.x && px <= ct.x + ct.w) {
-            const norm = (px - ct.x) / ct.w;
-            const curveVal = Math.sin(norm * Math.PI) * ct.height;
-            py = ct.type === 'concave'
-              ? GROUND_Y + curveVal
-              : GROUND_Y - curveVal;
-            break;
-          }
-        }
-
-        for (let s of slopes) {
-          if (px >= s.x1 && px <= s.x2) {
-            const progress = (px - s.x1) / (s.x2 - s.x1);
-            py = s.y1 + progress * (s.y2 - s.y1);
-            break;
-          }
-        }
-
-        ctx.lineTo(px, py);
-      }
-
       ctx.strokeStyle = '#8C6D58';
       ctx.lineWidth = 4;
+      ctx.beginPath();
+
+      let stepX = 10;
+      ctx.moveTo(0, GROUND_Y);
+      for (let px = 0; px <= worldWidth; px += stepX) {
+        let py = GROUND_Y;
+
+        for (let ct of curvedTerrains) {
+          if (px >= ct.x && px <= ct.x + ct.w) {
+            const norm = (px - ct.x) / ct.w;
+            const curveVal = Math.sin(norm * Math.PI) * ct.height;
+            py = ct.type === 'concave' ? GROUND_Y + curveVal : GROUND_Y - curveVal;
+            break;
+          }
+        }
+
+        for (let s of slopes) {
+          if (px >= s.x1 && px <= s.x2) {
+            const progress = (px - s.x1) / (s.x2 - s.x1);
+            py = s.y1 + progress * (s.y2 - s.y1);
+            break;
+          }
+        }
+
+        ctx.lineTo(px, py);
+      }
       ctx.stroke();
+
+      // 將所有凹形／凸形弧線下方填滿，使用與地板相同的顏色
+      curvedTerrains.forEach(ct => {
+        ctx.fillStyle = '#E2D5C7';
+        ctx.beginPath();
+        ctx.moveTo(ct.x, GROUND_Y);
+        const curveSteps = Math.max(20, Math.ceil(ct.w / 5));
+        for (let i = 0; i <= curveSteps; i++) {
+          const px = ct.x + (i / curveSteps) * ct.w;
+          const norm = (px - ct.x) / ct.w;
+          const curveVal = Math.sin(norm * Math.PI) * ct.height;
+          const py = ct.type === 'concave'
+            ? GROUND_Y + curveVal
+            : GROUND_Y - curveVal;
+          ctx.lineTo(px, py);
+        }
+        ctx.lineTo(ct.x + ct.w, GROUND_Y);
+        ctx.closePath();
+        ctx.fill();
+      });
 
       slopes.forEach(s => {
         ctx.fillStyle = 'rgba(210, 192, 175, 0.85)';
