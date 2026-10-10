@@ -241,12 +241,20 @@
       bottom: auto;
     }
 
-    /* b3：往左並往上移 */
-    #main-menu .menu-item:nth-child(3) {
+    /* b3：再往上移動 */
+    #b3-menu-item {
       right: 15%;
       left: auto;
       top: auto;
-      bottom: 9%;
+      bottom: 16%;
+    }
+
+    /* b4：放在 b2 下方，先鎖定 */
+    #b4-menu-item {
+      left: 9%;
+      top: 62%;
+      bottom: auto;
+      cursor: not-allowed;
     }
 
     .menu-img-btn {
@@ -287,11 +295,17 @@
         bottom: auto;
       }
 
-      #main-menu .menu-item:nth-child(3) {
+      #b3-menu-item {
         right: 12%;
         left: auto;
         top: auto;
-        bottom: 9%;
+        bottom: 16%;
+      }
+
+      #b4-menu-item {
+        left: 6%;
+        top: 62%;
+        bottom: auto;
       }
     }
 
@@ -423,7 +437,8 @@
           <img src="finger.webp" alt="finger" class="finger-icon">
         </div>
       </div>
-      <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨<br>   記得開啟音量哦</div>
+      <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨</div>
+      <div id="splash-volume-hint" class="splash-click-hint">記得開啟音量鍵哦</div>
     </div>
   </div>
 
@@ -462,6 +477,10 @@
       <div class="menu-item" id="b2-menu-item">
         <img id="b2-button" src="b2.webp" alt="佑錫規則&流程" class="menu-img-btn">
         <span class="menu-item-label">佑錫規則&流程</span>
+      </div>
+      <div class="menu-item" id="b4-menu-item" aria-disabled="true" title="此功能尚未開放">
+        <img src="b4.webp" alt="花絮&照片（尚未開放）" class="menu-img-btn disabled">
+        <span class="menu-item-label">花絮&照片</span>
       </div>
       <div class="menu-item" id="b3-menu-item" role="button" tabindex="0" aria-label="開啟禮包與扭蛋">
         <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn">
@@ -574,6 +593,7 @@
 
         // 進度條跑完後顯示點擊提示
         splashClickHint.classList.add('show');
+        document.getElementById('splash-volume-hint').classList.add('show');
 
         splashScreen.addEventListener('click', handleSplashClick);
         splashScreen.addEventListener('touchstart', handleSplashClick);
