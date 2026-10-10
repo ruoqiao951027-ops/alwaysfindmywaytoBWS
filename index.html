@@ -236,14 +236,15 @@
 
     /* b2：往左、往下移 */
     #b2-menu-item {
-      left: 7%;
-      top: 38%;
+      left: 9%;
+      top: 42%;
       bottom: auto;
     }
 
     /* b3：往右、稍微往下移 */
     #main-menu .menu-item:nth-child(3) {
-      right: 4%;
+      right: 7%;
+      left: auto;
       top: auto;
       bottom: 6%;
     }
@@ -281,8 +282,8 @@
       }
 
       #b2-menu-item {
-        left: 4%;
-        top: 38%;
+        left: 6%;
+        top: 42%;
         bottom: auto;
       }
 
@@ -449,7 +450,7 @@
         <span class="menu-item-label">佑錫規則&流程</span>
       </div>
       <div class="menu-item">
-        <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn disabled">
+        <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn">
         <span class="menu-item-label">禮包&扭蛋</span>
       </div>
     </div>
@@ -469,6 +470,16 @@
     </div>
   </section>
 
+  <!-- b3：上下滑動的禮包與扭蛋圖片內容頁 -->
+  <section id="gift-content-screen" class="hidden" aria-label="禮包與扭蛋內容">
+    <div class="library-content-inner">
+      <img src="gift1.webp" alt="禮包與扭蛋圖片一" class="library-content-image">
+      <img src="gift2.webp" alt="禮包與扭蛋圖片二" class="library-content-image">
+      <img src="gift3.webp" alt="禮包與扭蛋圖片三" class="library-content-image">
+      <button id="back-from-gift-btn" class="back-to-library-btn" type="button">回到圖書館</button>
+    </div>
+  </section>
+
   <script>
     const splashScreen = document.getElementById('splash-screen');
     const progressBar = document.getElementById('progress-bar');
@@ -480,8 +491,11 @@
     const mainMenu = document.getElementById('main-menu');
     const mainBgm = document.getElementById('main-bgm');
     const b2Button = document.getElementById('b2-button');
+    const b3Button = document.querySelector('#main-menu .menu-item:nth-child(3) .menu-img-btn');
     const libraryContentScreen = document.getElementById('library-content-screen');
     const backToLibraryButton = document.getElementById('back-to-library-btn');
+    const giftContentScreen = document.getElementById('gift-content-screen');
+    const backFromGiftButton = document.getElementById('back-from-gift-btn');
 
     // 點擊 b2 開啟可滑動內容頁；不切換網頁，背景音樂會繼續播放。
     b2Button.addEventListener('click', () => {
@@ -493,6 +507,19 @@
     // 回到 b1、b2、b3 的選單畫面。
     backToLibraryButton.addEventListener('click', () => {
       libraryContentScreen.classList.add('hidden');
+      mainMenu.classList.add('pop-up');
+    });
+
+    // 點擊 b3 開啟禮包與扭蛋內容頁，背景與音樂維持不變。
+    b3Button.addEventListener('click', () => {
+      mainMenu.classList.remove('pop-up');
+      giftContentScreen.classList.remove('hidden');
+      giftContentScreen.scrollTop = 0;
+    });
+
+    // 從禮包與扭蛋頁返回主選單。
+    backFromGiftButton.addEventListener('click', () => {
+      giftContentScreen.classList.add('hidden');
       mainMenu.classList.add('pop-up');
     });
 
