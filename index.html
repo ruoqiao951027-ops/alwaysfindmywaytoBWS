@@ -303,7 +303,8 @@
     .hidden { display: none !important; }
 
     /* b2：可上下滑動的圖書館內容頁 */
-    #library-content-screen {
+    #library-content-screen,
+    #gift-content-screen {
       position: fixed;
       inset: 0;
       z-index: 20;
@@ -345,6 +346,13 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
 
+    /* gift 圖片比 b2 圖片稍微縮小，並維持原始比例 */
+    .gift-content-image {
+      width: 88%;
+      max-width: 850px;
+      height: auto;
+    }
+
     .content-disclaimer { margin-top: 18px; }
 
     .back-to-library-btn {
@@ -372,6 +380,11 @@
         padding: 12px;
         gap: 16px;
         border-radius: 18px;
+      }
+
+      .gift-content-image {
+        width: 96%;
+        max-width: 100%;
       }
     }
 
@@ -449,7 +462,7 @@
         <img id="b2-button" src="b2.webp" alt="佑錫規則&流程" class="menu-img-btn">
         <span class="menu-item-label">佑錫規則&流程</span>
       </div>
-      <div class="menu-item">
+      <div class="menu-item" id="b3-menu-item" role="button" tabindex="0" aria-label="開啟禮包與扭蛋">
         <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn">
         <span class="menu-item-label">禮包&扭蛋</span>
       </div>
@@ -473,9 +486,9 @@
   <!-- b3：上下滑動的禮包與扭蛋圖片內容頁 -->
   <section id="gift-content-screen" class="hidden" aria-label="禮包與扭蛋內容">
     <div class="library-content-inner">
-      <img src="gift1.webp" alt="禮包與扭蛋圖片一" class="library-content-image">
-      <img src="gift2.webp" alt="禮包與扭蛋圖片二" class="library-content-image">
-      <img src="gift3.webp" alt="禮包與扭蛋圖片三" class="library-content-image">
+      <img src="gift1.webp" alt="禮包與扭蛋圖片一" class="library-content-image gift-content-image">
+      <img src="gift2.webp" alt="禮包與扭蛋圖片二" class="library-content-image gift-content-image">
+      <img src="gift3.webp" alt="禮包與扭蛋圖片三" class="library-content-image gift-content-image">
       <button id="back-from-gift-btn" class="back-to-library-btn" type="button">回到圖書館</button>
     </div>
   </section>
@@ -491,7 +504,7 @@
     const mainMenu = document.getElementById('main-menu');
     const mainBgm = document.getElementById('main-bgm');
     const b2Button = document.getElementById('b2-button');
-    const b3Button = document.querySelector('#main-menu .menu-item:nth-child(3) .menu-img-btn');
+    const b3Button = document.getElementById('b3-menu-item');
     const libraryContentScreen = document.getElementById('library-content-screen');
     const backToLibraryButton = document.getElementById('back-to-library-btn');
     const giftContentScreen = document.getElementById('gift-content-screen');
@@ -511,10 +524,18 @@
     });
 
     // 點擊 b3 開啟禮包與扭蛋內容頁，背景與音樂維持不變。
-    b3Button.addEventListener('click', () => {
+    function openGiftContent() {
       mainMenu.classList.remove('pop-up');
       giftContentScreen.classList.remove('hidden');
       giftContentScreen.scrollTop = 0;
+    }
+
+    b3Button.addEventListener('click', openGiftContent);
+    b3Button.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openGiftContent();
+      }
     });
 
     // 從禮包與扭蛋頁返回主選單。
