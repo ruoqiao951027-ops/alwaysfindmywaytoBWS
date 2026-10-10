@@ -223,9 +223,29 @@
       align-items: center;
     }
 
-    /* 圖片按鈕樣式設定：改用確切的 width 控制大小（數值越小按鈕越小，可自行微調，例如改成 160px 或 180px） */
+    /* 每個主選單項目：圖片下方搭配說明文字 */
+    .menu-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .menu-item-label {
+      font-size: 1rem;
+      line-height: 1.4;
+      font-weight: bold;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
+      white-space: nowrap;
+    }
+
+    /* 原本 180px 的 0.8 倍：144px */
     .menu-img-btn {
-      width: 180px; 
+      width: 144px;
       height: auto;
       cursor: pointer;
       display: block;
@@ -404,11 +424,18 @@
   <!-- 3. 主選單 (b1.webp, b2.webp, b3.webp 設定固定寬度並確保在最上層) -->
   <div id="main-menu" class="main-menu">
     <div class="btn-container">
-      <a href="game1.html">
-        <img src="b1.webp" alt="佑錫回顧小遊戲" class="menu-img-btn">
+      <a href="game1.html" class="menu-item">
+        <img src="b1.webp" alt="佑錫花路旅程" class="menu-img-btn">
+        <span class="menu-item-label">佑錫花路旅程</span>
       </a>
-      <img id="b2-button" src="b2.webp" alt="生咖地址&應援小禮" class="menu-img-btn">
-      <img src="b3.webp" alt="生咖會場瞧一眼" class="menu-img-btn disabled">
+      <div class="menu-item" id="b2-menu-item">
+        <img id="b2-button" src="b2.webp" alt="佑錫規則&流程" class="menu-img-btn">
+        <span class="menu-item-label">佑錫規則&流程</span>
+      </div>
+      <div class="menu-item">
+        <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn disabled">
+        <span class="menu-item-label">禮包&扭蛋</span>
+      </div>
     </div>
   </div>
 
