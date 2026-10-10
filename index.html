@@ -227,26 +227,26 @@
       pointer-events: none;
     }
 
-    /* b1：維持右側，往上移 */
+    /* b1：往上移 */
     #main-menu .menu-item:nth-child(1) {
       right: 8%;
+      top: 39%;
+      bottom: auto;
+    }
+
+    /* b2：往上移 */
+    #b2-menu-item {
+      left: 9%;
       top: 42%;
       bottom: auto;
     }
 
-    /* b2：往左、往下移 */
-    #b2-menu-item {
-      left: 9%;
-      top: 45%;
-      bottom: auto;
-    }
-
-    /* b3：往右、稍微往下移 */
+    /* b3：往左並往上移 */
     #main-menu .menu-item:nth-child(3) {
-      right: 14%;
+      right: 15%;
       left: auto;
       top: auto;
-      bottom: 6%;
+      bottom: 9%;
     }
 
     .menu-img-btn {
@@ -277,21 +277,21 @@
     @media (max-width: 600px) {
       #main-menu .menu-item:nth-child(1) {
         right: 4%;
-        top: 32%;
+        top: 29%;
         bottom: auto;
       }
 
       #b2-menu-item {
         left: 6%;
-        top: 45%;
+        top: 42%;
         bottom: auto;
       }
 
       #main-menu .menu-item:nth-child(3) {
-        right: 7%;
+        right: 12%;
         left: auto;
         top: auto;
-        bottom: 6%;
+        bottom: 9%;
       }
     }
 
@@ -348,12 +348,13 @@
 
     /* gift 圖片比 b2 圖片稍微縮小，並維持原始比例 */
     .gift-content-image {
-      width: 88%;
-      max-width: 850px;
+      width: 100%;
+      max-width: 100%;
       height: auto;
     }
 
-    .content-disclaimer { margin-top: 18px; }
+    /* b2、b3 的主辦方聲明都往下移一點 */
+    .content-disclaimer { margin-top: 28px; }
 
     .back-to-library-btn {
       display: inline-block;
@@ -383,7 +384,7 @@
       }
 
       .gift-content-image {
-        width: 96%;
+        width: 100%;
         max-width: 100%;
       }
     }
@@ -422,7 +423,7 @@
           <img src="finger.webp" alt="finger" class="finger-icon">
         </div>
       </div>
-      <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨</div>
+      <div id="splash-click-hint" class="splash-click-hint">✨ 點擊任意處繼續 ✨<br>記得開啟音量哦</div>
     </div>
   </div>
 
