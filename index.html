@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -227,32 +227,30 @@
       pointer-events: none;
     }
 
-    /* b1：往上移 */
+    /* 手機主選單位置 */
     #main-menu .menu-item:nth-child(1) {
-      right: 8%;
-      top: 39%;
+      right: 4%;
+      top: 29%;
       bottom: auto;
     }
 
-    /* b2：往上移 */
     #b2-menu-item {
-      left: 9%;
+      left: 6%;
       top: 42%;
       bottom: auto;
     }
 
-    /* b3：再往上移動 */
     #b3-menu-item {
-      right: 15%;
+      right: 12%;
       left: auto;
       top: auto;
       bottom: 16%;
     }
 
-    /* b4：放在 b2 下方，先鎖定 */
+    /* b4：放在 b2 下方，保持原圖顏色並鎖定 */
     #b4-menu-item {
-      left: 9%;
-      top: 62%;
+      left: 8%;
+      top: 66%;
       bottom: auto;
       cursor: not-allowed;
     }
@@ -266,48 +264,13 @@
       filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
 
-    .menu-item .menu-img-btn:hover {
-      transform: translateY(-3px) scale(1.05);
-      filter: drop-shadow(0 6px 15px rgba(255, 42, 116, 0.6));
-    }
-
+    /* 鎖定中的 b4 保持原圖顏色，不套用灰階 */
     .menu-img-btn.disabled {
       cursor: not-allowed;
-      opacity: 0.6;
-      filter: grayscale(80%);
+      opacity: 1;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
 
-    .menu-img-btn.disabled:hover {
-      transform: none;
-      filter: grayscale(80%);
-    }
-
-    @media (max-width: 600px) {
-      #main-menu .menu-item:nth-child(1) {
-        right: 4%;
-        top: 29%;
-        bottom: auto;
-      }
-
-      #b2-menu-item {
-        left: 6%;
-        top: 42%;
-        bottom: auto;
-      }
-
-      #b3-menu-item {
-        right: 12%;
-        left: auto;
-        top: auto;
-        bottom: 16%;
-      }
-
-      #b4-menu-item {
-        left: 6%;
-        top: 62%;
-        bottom: auto;
-      }
-    }
 
     .fade-out {
       opacity: 0 !important;
@@ -328,23 +291,21 @@
       background-image: url('bgmain.webp');
       background-size: cover;
       background-position: center;
-      background-attachment: fixed;
       -webkit-overflow-scrolling: touch;
       padding: 48px 16px 36px;
     }
 
     .library-content-inner {
       width: 100%;
-      max-width: 1100px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      padding: 22px;
+      padding: 12px 12px 32px;
       background: rgba(112, 164, 208, 0.42);
       border: 1px solid rgba(220, 232, 240, 0.35);
-      border-radius: 24px;
+      border-radius: 18px;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
@@ -360,7 +321,7 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
 
-    /* gift 圖片比 b2 圖片稍微縮小，並維持原始比例 */
+    /* b3 圖片與 b2 一樣填滿邊框內可用寬度 */
     .gift-content-image {
       width: 100%;
       max-width: 100%;
@@ -385,24 +346,6 @@
       transition: transform 0.2s ease, background 0.2s ease;
     }
 
-    .back-to-library-btn:hover {
-      transform: translateY(-2px);
-      background: #ff2a74;
-    }
-
-    @media (max-width: 600px) {
-      .library-content-inner {
-        padding: 12px;
-        gap: 16px;
-        border-radius: 18px;
-      }
-
-      .gift-content-image {
-        width: 100%;
-        max-width: 100%;
-      }
-    }
-
     .content-disclaimer {
       width: 100%;
       text-align: center;
@@ -419,8 +362,8 @@
 
     .content-disclaimer img {
       display: inline-block;
-      width: 42px;
-      max-height: 28px;
+      width: 84px;
+      max-height: 56px;
       height: auto;
       object-fit: contain;
       vertical-align: middle;
