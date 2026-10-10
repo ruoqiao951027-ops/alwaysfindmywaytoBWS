@@ -18,14 +18,11 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-
-      /* 背景顏色填滿 (70, 44, 25) 與 webp 背景圖片設定 */
       background-color: rgb(70, 44, 25);
-      background-image: url('bgmain.webp'); 
-      background-size: cover;         
-      background-position: center;     
-      background-repeat: no-repeat;    
-      
+      background-image: url('bgmain.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       font-family: Arial, sans-serif;
       color: #fff;
       overflow: hidden;
@@ -50,7 +47,6 @@
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
 
-    /* 進度條總容器：定位於中央偏下 (top: 65%) */
     .progress-container {
       position: absolute;
       top: 65%;
@@ -63,7 +59,6 @@
       align-items: center;
     }
 
-    /* 進度條上方的標題 */
     .splash-title-text {
       font-size: 2rem;
       font-weight: bold;
@@ -74,18 +69,16 @@
       white-space: nowrap;
     }
 
-    /* 進度條軌道：加粗至 40px */
     .progress-track {
       position: relative;
       width: 100%;
       height: 40px;
       background: rgba(255, 255, 255, 0.3);
       border-radius: 20px;
-      overflow: visible; /* 確保超大手指不被裁切 */
+      overflow: visible;
       backdrop-filter: blur(2px);
     }
 
-    /* 進度條本體 */
     .progress-bar {
       position: absolute;
       left: 0;
@@ -97,42 +90,29 @@
       transition: width 0.2s linear;
     }
 
-    /* 手指圖示：200px 定位 */
     .finger-icon {
       position: absolute;
-      right: -100px; /* 推至寬度一半 (200px / 2) */
+      right: -100px;
       top: 50%;
       width: 200px;
       height: 200px;
       object-fit: contain;
       pointer-events: none;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
-      
-      /* 1.5秒跳動動畫 (-15deg ↔ +15deg) */
       -webkit-animation: fingerJump 1.5s infinite steps(1);
       animation: fingerJump 1.5s infinite steps(1);
     }
 
-    /* 手指兩角度瞬間跳動 Keyframes */
     @-webkit-keyframes fingerJump {
-      0% {
-        transform: translateY(-50%) rotate(-15deg);
-      }
-      50% {
-        transform: translateY(-50%) rotate(15deg);
-      }
+      0% { transform: translateY(-50%) rotate(-15deg); }
+      50% { transform: translateY(-50%) rotate(15deg); }
     }
 
     @keyframes fingerJump {
-      0% {
-        transform: translateY(-50%) rotate(-15deg);
-      }
-      50% {
-        transform: translateY(-50%) rotate(15deg);
-      }
+      0% { transform: translateY(-50%) rotate(-15deg); }
+      50% { transform: translateY(-50%) rotate(15deg); }
     }
 
-    /* 進度條下方的點擊提示文字 */
     .splash-click-hint {
       margin-top: 25px;
       font-size: 1.1rem;
@@ -143,9 +123,7 @@
       white-space: nowrap;
     }
 
-    .splash-click-hint.show {
-      opacity: 1;
-    }
+    .splash-click-hint.show { opacity: 1; }
 
     /* 2. 介紹文字畫面 */
     #intro-screen {
@@ -173,7 +151,6 @@
       max-width: 500px;
       margin-bottom: 20px;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-      
       opacity: 0;
       transform: translateY(40px);
       transition: opacity 0.8s ease, transform 0.8s ease;
@@ -192,11 +169,9 @@
       transition: opacity 0.8s ease;
     }
 
-    .click-hint.show {
-      opacity: 1;
-    }
+    .click-hint.show { opacity: 1; }
 
-    /* 3. 主選單 (確保在最上層 z-index: 15) */
+    /* 3. 主選單 */
     .main-menu {
       position: fixed;
       inset: 0;
@@ -205,7 +180,6 @@
       max-width: none;
       width: 100%;
       height: 100%;
-
       opacity: 0;
       transform: scale(0.8);
       transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -225,48 +199,57 @@
       height: 100%;
     }
 
-    /* 每個主選單項目：圖片下方搭配較大的說明文字 */
     .menu-item {
       position: absolute;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 0;
       text-decoration: none;
       color: #fff;
     }
 
+    /* 文字疊在圖片底部，字級調整為 1.4rem */
     .menu-item-label {
-      font-size: 1.6rem;
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: 1.4rem;
       line-height: 1.1;
       font-weight: bold;
       text-align: center;
       color: #fff;
-      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
-      margin-top: -8px;
+      margin-top: 0;
+      pointer-events: none;
     }
 
+    /* b1：維持右側，往上移 */
     #main-menu .menu-item:nth-child(1) {
       right: 8%;
-      top: 50%;
+      top: 42%;
       bottom: auto;
     }
 
+    /* b2：往左、往下移 */
     #b2-menu-item {
-      left: 10%;
-      top: 30%;
+      left: 7%;
+      top: 38%;
       bottom: auto;
     }
 
+    /* b3：往右、稍微往下移 */
     #main-menu .menu-item:nth-child(3) {
-      right: 8%;
+      right: 4%;
       top: auto;
-      bottom: 9%;
+      bottom: 6%;
     }
 
     .menu-img-btn {
-      width: 136px;
+      width: 128px;
       height: auto;
       cursor: pointer;
       display: block;
@@ -279,7 +262,6 @@
       filter: drop-shadow(0 6px 15px rgba(255, 42, 116, 0.6));
     }
 
-    /* 停用狀態的圖片按鈕樣式 */
     .menu-img-btn.disabled {
       cursor: not-allowed;
       opacity: 0.6;
@@ -292,20 +274,23 @@
     }
 
     @media (max-width: 600px) {
-      .menu-item-label {
-        font-size: 2rem;
-      }
-
       #main-menu .menu-item:nth-child(1) {
         right: 4%;
+        top: 32%;
+        bottom: auto;
+      }
+
+      #b2-menu-item {
+        left: 4%;
         top: 38%;
         bottom: auto;
       }
 
       #main-menu .menu-item:nth-child(3) {
-        left: 4%;
+        right: 4%;
+        left: auto;
         top: auto;
-        bottom: 9%;
+        bottom: 6%;
       }
     }
 
@@ -314,9 +299,7 @@
       visibility: hidden !important;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     /* b2：可上下滑動的圖書館內容頁 */
     #library-content-screen {
@@ -342,8 +325,6 @@
       flex-direction: column;
       align-items: center;
       gap: 16px;
-
-      /* 圖片後方、背景前方的半透明藍灰色圓角框 */
       padding: 22px;
       background: rgba(112, 164, 208, 0.42);
       border: 1px solid rgba(220, 232, 240, 0.35);
@@ -363,9 +344,7 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
 
-    .content-disclaimer {
-      margin-top: 18px;
-    }
+    .content-disclaimer { margin-top: 18px; }
 
     .back-to-library-btn {
       display: inline-block;
@@ -420,14 +399,12 @@
   </style>
 </head>
 <body>
-
-  <!-- 1. Splash Screen 待機畫面 (上方標題 + 進度條與手指 + 下方提示) -->
+  <!-- 1. Splash Screen 待機畫面 -->
   <div id="splash-screen">
     <div class="progress-container">
       <div class="splash-title-text">筒筒's Library</div>
       <div class="progress-track">
         <div id="progress-bar" class="progress-bar">
-          <!-- 手指圖片 webp -->
           <img src="finger.webp" alt="finger" class="finger-icon">
         </div>
       </div>
@@ -444,7 +421,7 @@
       是怎樣的情景呢?<br>
       相信筒筒們會有聊不完的話題<br>
     </div>
-    
+
     <div id="intro-2" class="intro-text">
       今年再次舉辦了邊邊生咖<br>
       歡迎筒筒們前來<br>
@@ -460,7 +437,7 @@
   <!-- 主畫面背景音樂 -->
   <audio id="main-bgm" src="main.mp3" loop></audio>
 
-  <!-- 3. 主選單 (b1.webp, b2.webp, b3.webp 設定固定寬度並確保在最上層) -->
+  <!-- 3. 主選單 -->
   <div id="main-menu" class="main-menu">
     <div class="btn-container">
       <a href="game1.html" class="menu-item">
@@ -478,7 +455,7 @@
     </div>
   </div>
 
-  <!-- b2：上下滑動的圖片內容頁；不重新載入頁面，因此背景音樂會持續播放 -->
+  <!-- b2：上下滑動的圖片內容頁 -->
   <section id="library-content-screen" class="hidden" aria-label="生咖地址與應援小禮內容">
     <div class="library-content-inner">
       <img src="pic1.webp" alt="生咖地址與應援小禮圖片一" class="library-content-image">
@@ -533,22 +510,22 @@
     document.addEventListener('click', initAudio);
     document.addEventListener('touchstart', initAudio);
 
-    // 模擬資源載入進度條跑動 (已調慢)
+    // 模擬資源載入進度條跑動
     let progress = 0;
     const loadingInterval = setInterval(() => {
       progress += Math.floor(Math.random() * 4) + 2;
-      
+
       if (progress >= 100) {
         progress = 100;
         clearInterval(loadingInterval);
-        
-        // 進度條跑完後顯示「✨ 點擊任意處繼續 ✨」
+
+        // 進度條跑完後顯示點擊提示
         splashClickHint.classList.add('show');
 
         splashScreen.addEventListener('click', handleSplashClick);
         splashScreen.addEventListener('touchstart', handleSplashClick);
       }
-      
+
       progressBar.style.width = progress + '%';
     }, 200);
 
@@ -587,6 +564,5 @@
       introScreen.removeEventListener('touchstart', handleIntroClick);
     }
   </script>
-
 </body>
 </html>
