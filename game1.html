@@ -192,15 +192,14 @@
 
     .controls {
       position: absolute;
-      /* 地平線在畫布高度的 68%；由地平線到最下方按 3:7 定位按鈕中心 */
-      top: 77.6%;
-      bottom: auto;
+      /* 以遊戲畫面高度為基準，讓左右移動按鈕與跳躍按鈕可各自定位 */
+      top: 0;
+      bottom: 0;
       left: 0;
       width: 100%;
-      transform: translateY(-50%);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      height: 100%;
+      transform: none;
+      display: block;
       padding: 0 25px;
       pointer-events: none;
       z-index: 10;
@@ -211,6 +210,22 @@
       gap: 20px;
       align-items: flex-end;
       pointer-events: auto;
+    }
+
+    /* 左右移動按鈕：地平線到畫面底部的 2:8，中心位於 74.4% */
+    .controls > .btn-group:first-child {
+      position: absolute;
+      top: 74.4%;
+      left: 0;
+      transform: translateY(-50%);
+    }
+
+    /* 跳躍按鈕維持 3:7，中心位於 77.6% */
+    .controls > .btn-group:last-child {
+      position: absolute;
+      top: 77.6%;
+      right: 0;
+      transform: translateY(-50%);
     }
 
     .arrow-container {
@@ -262,7 +277,7 @@
 
     .jump-btn:active {
       opacity: 0.95;
-      transform: scale(0.92);
+      transform: translateY(-50%) scale(0.92);
     }
 
     #event-modal {
