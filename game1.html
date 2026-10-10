@@ -44,7 +44,8 @@
 
     #score-badge {
       position: absolute;
-      top: calc(75px + env(safe-area-inset-top));
+      /* 依背景照片本身定位：照片頂端約在畫布 13.33%，照片高度約 54.67%；往下 1:9（總共 10 等分）約為畫布高度的 18.8%。不依裝置螢幕或安全區計算 */
+      top: 18.8%;
       left: 20px;
       z-index: 60;
       color: #3D2E24;
