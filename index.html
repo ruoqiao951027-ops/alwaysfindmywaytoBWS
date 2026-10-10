@@ -258,6 +258,61 @@
     .hidden {
       display: none !important;
     }
+
+    /* b2：可上下滑動的圖書館內容頁 */
+    #library-content-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: rgb(70, 44, 25);
+      background-image: url('bgmain.webp');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 16px 36px;
+    }
+
+    .library-content-inner {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .library-content-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .back-to-library-btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 14px 28px;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      border-radius: 999px;
+      background: #ff758c;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .back-to-library-btn:hover {
+      transform: translateY(-2px);
+      background: #ff2a74;
+    }
   </style>
 </head>
 <body>
@@ -307,10 +362,19 @@
       <a href="game1.html">
         <img src="b1.webp" alt="佑錫回顧小遊戲" class="menu-img-btn">
       </a>
-      <img src="b2.webp" alt="生咖地址&應援小禮" class="menu-img-btn disabled">
+      <img id="b2-button" src="b2.webp" alt="生咖地址&應援小禮" class="menu-img-btn">
       <img src="b3.webp" alt="生咖會場瞧一眼" class="menu-img-btn disabled">
     </div>
   </div>
+
+  <!-- b2：上下滑動的圖片內容頁；不重新載入頁面，因此背景音樂會持續播放 -->
+  <section id="library-content-screen" class="hidden" aria-label="生咖地址與應援小禮內容">
+    <div class="library-content-inner">
+      <img src="pic1.webp" alt="生咖地址與應援小禮圖片一" class="library-content-image">
+      <img src="pic2.webp" alt="生咖地址與應援小禮圖片二" class="library-content-image">
+      <button id="back-to-library-btn" class="back-to-library-btn" type="button">回到圖書館</button>
+    </div>
+  </section>
 
   <script>
     const splashScreen = document.getElementById('splash-screen');
@@ -322,6 +386,22 @@
     const clickHint = document.getElementById('click-hint');
     const mainMenu = document.getElementById('main-menu');
     const mainBgm = document.getElementById('main-bgm');
+    const b2Button = document.getElementById('b2-button');
+    const libraryContentScreen = document.getElementById('library-content-screen');
+    const backToLibraryButton = document.getElementById('back-to-library-btn');
+
+    // 點擊 b2 開啟可滑動內容頁；不切換網頁，背景音樂會繼續播放。
+    b2Button.addEventListener('click', () => {
+      mainMenu.classList.remove('pop-up');
+      libraryContentScreen.classList.remove('hidden');
+      libraryContentScreen.scrollTop = 0;
+    });
+
+    // 回到 b1、b2、b3 的選單畫面。
+    backToLibraryButton.addEventListener('click', () => {
+      libraryContentScreen.classList.add('hidden');
+      mainMenu.classList.add('pop-up');
+    });
 
     mainBgm.volume = 0.5;
 
