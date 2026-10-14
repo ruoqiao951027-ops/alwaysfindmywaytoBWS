@@ -406,6 +406,16 @@
       line-height: 1.5;
       color: #ffb6c5;
       margin-bottom: 12px;
+      text-align: center;
+    }
+
+    /* 主辦資訊置中；從「總策劃與設計」開始，名單內容靠左對齊 */
+    .staff-list p:first-of-type {
+      text-align: center;
+    }
+
+    .staff-list p:nth-of-type(n + 2) {
+      text-align: left;
     }
 
     .staff-click-hint {
@@ -588,7 +598,7 @@
       <p>財務：@masakicheng（Yvonne）</p>
       <p>週邊提供：@0430amy（Amy）</p>
       <p>文書：@jilljup（Jill）</p>
-      <p>巧手智囊團：@anneena0606（小庭）、@sammi.chen.1044（Sammi）、@ll.shih（小君）、@yi_lin07（真伊）、@peggy_nien（peggy）</p>
+      <p>巧手智囊團：@anneena0606（小庭）、@sammi.chen.1044（Sammi）、<p>@ll.shih（小君）、@yi_lin07（真伊）、@peggy_nien（peggy）</p>
       <div id="staff-click-hint" class="staff-click-hint">✨ 點擊任意處繼續 ✨</div>
     </div>
 
@@ -607,7 +617,7 @@
       <p class="staff-video-hint">感謝每一位參與這段珍貴回憶的你。</p>
     </div>
 
-    <button id="back-from-staff-video-btn" class="back-to-library-btn" type="button">回到圖書館</button>
+    <button id="back-from-staff-video-btn" class="back-to-library-btn hidden" type="button">回到圖書館</button>
   </section>
 
   <script>
@@ -683,6 +693,7 @@
       staffClickHint.classList.remove('show');
       staffVideoStage.classList.add('hidden');
       staffVideoStage.classList.remove('show');
+      backFromStaffVideoButton.classList.add('hidden');
       staffVideoPlayer.src = '';
       staffVideoStep = 0;
       staffTransitioning = false;
@@ -719,6 +730,7 @@
       setTimeout(() => {
         staffList.classList.add('hidden');
         staffVideoStage.classList.remove('hidden');
+        backFromStaffVideoButton.classList.remove('hidden');
 
         // 使用 YouTube 嵌入網址，影片只在切換到此階段時載入。
         staffVideoPlayer.src = memorialVideoUrl;
