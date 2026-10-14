@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -208,7 +209,7 @@
       color: #fff;
     }
 
-    /* 文字疊在圖片底部，字級調整為 1.4rem */
+    /* 文字疊在圖片底部 */
     .menu-item-label {
       position: absolute;
       left: 50%;
@@ -263,13 +264,12 @@
       filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
 
-    /* 鎖定中的 b4 保持原圖顏色，不套用灰階 */
+    /* 鎖定中的 b4 保持原圖顏色 */
     .menu-img-btn.disabled {
       cursor: not-allowed;
       opacity: 1;
       filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
-
 
     .fade-out {
       opacity: 0 !important;
@@ -278,7 +278,7 @@
 
     .hidden { display: none !important; }
 
-    /* b2：可上下滑動的圖書館內容頁 */
+    /* b2、b3：可上下滑動的內容頁 */
     #library-content-screen,
     #gift-content-screen {
       position: fixed;
@@ -327,7 +327,7 @@
       height: auto;
     }
 
-    /* 主辦方聲明靠近最後一張圖片，並減少與 IP 圖示的間距 */
+    /* 主辦方聲明靠近最後一張圖片 */
     .content-disclaimer { margin-top: 0; }
 
     .back-to-library-btn {
@@ -416,14 +416,17 @@
         <img src="b1.webp" alt="佑錫花路旅程" class="menu-img-btn">
         <span class="menu-item-label">佑錫花路旅程</span>
       </a>
+
       <div class="menu-item" id="b2-menu-item">
         <img id="b2-button" src="b2.webp" alt="佑錫規則&流程" class="menu-img-btn">
         <span class="menu-item-label">佑錫規則&流程</span>
       </div>
+
       <div class="menu-item" id="b4-menu-item" aria-disabled="true" title="此功能尚未開放">
-        <img src="b4.webp" alt="花絮&照片（尚未開放）" class="menu-img-btn disabled">
-        <span class="menu-item-label">花絮&照片</span>
+        <img src="b4.webp" alt="籌備人員名單與紀念影片（尚未開放）" class="menu-img-btn disabled">
+        <span class="menu-item-label">籌備人員名單<br>&amp;紀念影片</span>
       </div>
+
       <div class="menu-item" id="b3-menu-item" role="button" tabindex="0" aria-label="開啟禮包與扭蛋">
         <img src="b3.webp" alt="禮包&扭蛋" class="menu-img-btn">
         <span class="menu-item-label">禮包&扭蛋</span>
@@ -437,24 +440,27 @@
       <img src="pic1.webp" alt="生咖地址與應援小禮圖片一" class="library-content-image">
       <img src="pic2.webp" alt="生咖地址與應援小禮圖片二" class="library-content-image">
       <img src="pic3.webp" alt="生咖地址與應援小禮圖片三" class="library-content-image">
+
       <p class="content-disclaimer">
         <img src="ip.webp" alt="IP">
         <span>主辦方保有最終解釋權</span>
       </p>
+
       <button id="back-to-library-btn" class="back-to-library-btn" type="button">回到圖書館</button>
     </div>
   </section>
 
-  <!-- b3：上下滑動的禮包與扭蛋圖片內容頁 -->
+  <!-- b3：上下滑動的禮包與扭蛋圖片內容頁，只保留 gift1、gift2 -->
   <section id="gift-content-screen" class="hidden" aria-label="禮包與扭蛋內容">
     <div class="library-content-inner">
       <img src="gift1.webp" alt="禮包與扭蛋圖片一" class="library-content-image gift-content-image">
       <img src="gift2.webp" alt="禮包與扭蛋圖片二" class="library-content-image gift-content-image">
-      <img src="gift3.webp" alt="禮包與扭蛋圖片三" class="library-content-image gift-content-image">
+
       <p class="content-disclaimer">
         <img src="ip.webp" alt="IP">
         <span>主辦方保有最終解釋權</span>
       </p>
+
       <button id="back-from-gift-btn" class="back-to-library-btn" type="button">回到圖書館</button>
     </div>
   </section>
@@ -483,7 +489,7 @@
       libraryContentScreen.scrollTop = 0;
     });
 
-    // 回到 b1、b2、b3 的選單畫面。
+    // 回到主選單。
     backToLibraryButton.addEventListener('click', () => {
       libraryContentScreen.classList.add('hidden');
       mainMenu.classList.add('pop-up');
@@ -521,11 +527,13 @@
         console.log("等待使用者點擊以播放音樂...");
       });
     }
+
     document.addEventListener('click', initAudio);
     document.addEventListener('touchstart', initAudio);
 
     // 模擬資源載入進度條跑動
     let progress = 0;
+
     const loadingInterval = setInterval(() => {
       progress += Math.floor(Math.random() * 4) + 2;
 
@@ -581,3 +589,4 @@
   </script>
 </body>
 </html>
+```
