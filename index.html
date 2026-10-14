@@ -247,12 +247,12 @@
       bottom: 16%;
     }
 
-    /* b4：放在 b2 下方，保持原圖顏色並鎖定 */
+    /* b4：放在 b2 下方 */
     #b4-menu-item {
       left: 8%;
       top: 69%;
       bottom: auto;
-      cursor: not-allowed;
+      cursor: pointer;
     }
 
     .menu-img-btn {
@@ -264,7 +264,6 @@
       filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
     }
 
-    /* 鎖定中的 b4 保持原圖顏色 */
     .menu-img-btn.disabled {
       cursor: not-allowed;
       opacity: 1;
@@ -320,14 +319,12 @@
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
 
-    /* b3 圖片與 b2 一樣填滿邊框內可用寬度 */
     .gift-content-image {
       width: 100%;
       max-width: 100%;
       height: auto;
     }
 
-    /* 主辦方聲明靠近最後一張圖片 */
     .content-disclaimer { margin-top: 0; }
 
     .back-to-library-btn {
@@ -366,6 +363,124 @@
       height: auto;
       object-fit: contain;
       vertical-align: middle;
+    }
+
+    /* B4：籌備名單與紀念影片，沿用 intro-screen 的顯示效果 */
+    #staff-video-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: rgba(10, 10, 20, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .staff-list {
+      width: 100%;
+      max-width: 650px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #fff;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      overflow-wrap: anywhere;
+    }
+
+    .staff-list.slide-up {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .staff-list h2 {
+      font-size: 1.5rem;
+      line-height: 1.5;
+      color: #ffb6c5;
+      margin-bottom: 12px;
+    }
+
+    .staff-click-hint {
+      margin-top: 22px;
+      font-size: 0.95rem;
+      color: #ff758c;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .staff-click-hint.show { opacity: 1; }
+
+    .staff-video-stage {
+      width: 100%;
+      max-width: 800px;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .staff-video-stage.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .staff-video-title {
+      font-size: 1.5rem;
+      color: #ffb6c5;
+      margin-bottom: 18px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .staff-video-player {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 0;
+      border-radius: 12px;
+      background: #000;
+      box-shadow: 0 4px 22px rgba(0, 0, 0, 0.5);
+    }
+
+    .staff-video-hint {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: #ffd5df;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    #back-from-staff-video-btn {
+      margin-top: 24px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      #staff-video-screen {
+        justify-content: flex-start;
+        padding: 24px 16px;
+      }
+
+      .staff-list {
+        font-size: 0.98rem;
+        line-height: 1.8;
+        margin-top: auto;
+      }
+
+      .staff-list h2,
+      .staff-video-title {
+        font-size: 1.35rem;
+      }
+
+      .staff-video-stage {
+        margin-top: auto;
+      }
     }
   </style>
 </head>
@@ -422,8 +537,8 @@
         <span class="menu-item-label">佑錫規則&流程</span>
       </div>
 
-      <div class="menu-item" id="b4-menu-item" aria-disabled="true" title="此功能尚未開放">
-        <img src="b4.webp" alt="籌備人員名單與紀念影片（尚未開放）" class="menu-img-btn disabled">
+      <div class="menu-item" id="b4-menu-item" role="button" tabindex="0" aria-label="籌備人員名單與紀念影片">
+        <img src="b4.webp" alt="籌備人員名單與紀念影片" class="menu-img-btn">
         <span class="menu-item-label">籌備人員名單<br>&amp;紀念影片</span>
       </div>
 
@@ -440,12 +555,10 @@
       <img src="pic1.webp" alt="生咖地址與應援小禮圖片一" class="library-content-image">
       <img src="pic2.webp" alt="生咖地址與應援小禮圖片二" class="library-content-image">
       <img src="pic3.webp" alt="生咖地址與應援小禮圖片三" class="library-content-image">
-
       <p class="content-disclaimer">
         <img src="ip.webp" alt="IP">
         <span>主辦方保有最終解釋權</span>
       </p>
-
       <button id="back-to-library-btn" class="back-to-library-btn" type="button">回到圖書館</button>
     </div>
   </section>
@@ -455,14 +568,46 @@
     <div class="library-content-inner">
       <img src="gift1.webp" alt="禮包與扭蛋圖片一" class="library-content-image gift-content-image">
       <img src="gift2.webp" alt="禮包與扭蛋圖片二" class="library-content-image gift-content-image">
-
       <p class="content-disclaimer">
         <img src="ip.webp" alt="IP">
         <span>主辦方保有最終解釋權</span>
       </p>
-
       <button id="back-from-gift-btn" class="back-to-library-btn" type="button">回到圖書館</button>
     </div>
+  </section>
+
+  <!-- B4：先顯示籌備人員名單，點擊後顯示 YouTube 紀念影片 -->
+  <section id="staff-video-screen" class="hidden" aria-label="籌備人員名單與紀念影片">
+    <div id="staff-list" class="staff-list">
+      <h2>2026 邊佑錫台北生咖籌備人員名單</h2>
+      <p>2026 邊佑錫台北生咖由一起追邊邊粉絲團（Be with BWS forever）主辦</p>
+      <p>總策劃與設計：@puppy11.17（蘇菲亞）</p>
+      <p>採購：@cindy366813（Lin）、@elishia_hsu（芳芳）</p>
+      <p>花藝與佈置：@mekomestarnflower（瑋玲）</p>
+      <p>影片剪輯：@a771799（小燕）</p>
+      <p>財務：@masakicheng（Yvonne）</p>
+      <p>週邊提供：@0430amy（Amy）</p>
+      <p>文書：@jilljup（Jill）</p>
+      <p>巧手智囊團：@anneena0606（小庭）、@sammi.chen.1044（Sammi）、@ll.shih（小君）、@yi_lin07（真伊）、@peggy_nien（peggy）</p>
+      <div id="staff-click-hint" class="staff-click-hint">✨ 點擊任意處繼續 ✨</div>
+    </div>
+
+    <div id="staff-video-stage" class="staff-video-stage hidden">
+      <h2 class="staff-video-title">紀念影片</h2>
+      <iframe
+        id="staff-video-player"
+        class="staff-video-player"
+        src=""
+        title="2026 邊佑錫台北生咖紀念影片"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen>
+      </iframe>
+      <p class="staff-video-hint">感謝每一位參與這段珍貴回憶的你。</p>
+    </div>
+
+    <button id="back-from-staff-video-btn" class="back-to-library-btn" type="button">回到圖書館</button>
   </section>
 
   <script>
@@ -477,12 +622,24 @@
     const mainBgm = document.getElementById('main-bgm');
     const b2Button = document.getElementById('b2-button');
     const b3Button = document.getElementById('b3-menu-item');
+    const b4Button = document.getElementById('b4-menu-item');
     const libraryContentScreen = document.getElementById('library-content-screen');
     const backToLibraryButton = document.getElementById('back-to-library-btn');
     const giftContentScreen = document.getElementById('gift-content-screen');
     const backFromGiftButton = document.getElementById('back-from-gift-btn');
 
-    // 點擊 b2 開啟可滑動內容頁；不切換網頁，背景音樂會繼續播放。
+    // B4：籌備人員名單與 YouTube 紀念影片
+    const staffVideoScreen = document.getElementById('staff-video-screen');
+    const staffList = document.getElementById('staff-list');
+    const staffClickHint = document.getElementById('staff-click-hint');
+    const staffVideoStage = document.getElementById('staff-video-stage');
+    const staffVideoPlayer = document.getElementById('staff-video-player');
+    const backFromStaffVideoButton = document.getElementById('back-from-staff-video-btn');
+    const memorialVideoUrl = 'https://www.youtube.com/embed/6uVhp_5INAg';
+    let staffVideoStep = 0;
+    let staffTransitioning = false;
+
+    // 點擊 b2 開啟可滑動內容頁；背景音樂會繼續播放。
     b2Button.addEventListener('click', () => {
       mainMenu.classList.remove('pop-up');
       libraryContentScreen.classList.remove('hidden');
@@ -495,7 +652,7 @@
       mainMenu.classList.add('pop-up');
     });
 
-    // 點擊 b3 開啟禮包與扭蛋內容頁，背景與音樂維持不變。
+    // 點擊 b3 開啟禮包與扭蛋內容頁。
     function openGiftContent() {
       mainMenu.classList.remove('pop-up');
       giftContentScreen.classList.remove('hidden');
@@ -513,6 +670,70 @@
     // 從禮包與扭蛋頁返回主選單。
     backFromGiftButton.addEventListener('click', () => {
       giftContentScreen.classList.add('hidden');
+      mainMenu.classList.add('pop-up');
+    });
+
+    // 開啟 B4：名單使用與 intro-text 相同的向上浮現效果。
+    function openStaffVideoScreen() {
+      mainMenu.classList.remove('pop-up');
+      staffVideoScreen.classList.remove('hidden');
+      staffVideoScreen.scrollTop = 0;
+
+      staffList.classList.remove('hidden', 'slide-up');
+      staffClickHint.classList.remove('show');
+      staffVideoStage.classList.add('hidden');
+      staffVideoStage.classList.remove('show');
+      staffVideoPlayer.src = '';
+      staffVideoStep = 0;
+      staffTransitioning = false;
+
+      setTimeout(() => {
+        staffList.classList.add('slide-up');
+      }, 300);
+
+      setTimeout(() => {
+        if (staffVideoStep === 0) {
+          staffClickHint.classList.add('show');
+        }
+      }, 1300);
+    }
+
+    b4Button.addEventListener('click', openStaffVideoScreen);
+    b4Button.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openStaffVideoScreen();
+      }
+    });
+
+    // 點擊名單畫面後，名單淡出，再顯示 YouTube 影片預覽。
+    staffVideoScreen.addEventListener('click', (event) => {
+      if (event.target.closest('#back-from-staff-video-btn')) return;
+      if (staffVideoStep !== 0 || staffTransitioning) return;
+
+      staffTransitioning = true;
+      staffVideoStep = 1;
+      staffList.classList.remove('slide-up');
+      staffClickHint.classList.remove('show');
+
+      setTimeout(() => {
+        staffList.classList.add('hidden');
+        staffVideoStage.classList.remove('hidden');
+
+        // 使用 YouTube 嵌入網址，影片只在切換到此階段時載入。
+        staffVideoPlayer.src = memorialVideoUrl;
+
+        requestAnimationFrame(() => {
+          staffVideoStage.classList.add('show');
+          staffTransitioning = false;
+        });
+      }, 800);
+    });
+
+    // 返回主選單並停止影片。
+    backFromStaffVideoButton.addEventListener('click', () => {
+      staffVideoPlayer.src = '';
+      staffVideoScreen.classList.add('hidden');
       mainMenu.classList.add('pop-up');
     });
 
@@ -541,7 +762,6 @@
         progress = 100;
         clearInterval(loadingInterval);
 
-        // 進度條跑完後顯示點擊提示
         splashClickHint.classList.add('show');
         document.getElementById('splash-volume-hint').classList.add('show');
 
@@ -589,4 +809,3 @@
   </script>
 </body>
 </html>
-```
